@@ -59,12 +59,20 @@ sp_change_clean<-read.csv("ChANGE_spp comp_2013-2016.csv")%>%
 sp_change<-merge(sp_change_clean, change_trt, by="plot_id")
 
 sp_invert <- read.csv('Vert Invert_spp comp_2009-2016.csv')%>%
+  spread(key=season, value=cover, fill=0)%>%
+  group_by(year, plot, taxa)%>%
+  mutate(cover=max(fall,spring))%>%
+  ungroup()%>%
   mutate(project_name='invert', calendar_year=year, plot_id=plot, treatment=trt_other_name, genus_species=taxa, abundance=cover)%>%
   select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)%>%
   filter(genus_species!='bare ground')
 
 
 sp_nutnet <- read.csv('NutNet_spp comp_2007-2016.csv')%>%
+  spread(key=season, value=cover, fill=0)%>%
+  group_by(year, plot, taxa)%>%
+  mutate(cover=max(fall,spring))%>%
+  ungroup()%>%
   mutate(project_name='nutnet', calendar_year=year, plot_id=plot, treatment=treat_other_name, genus_species=taxa, abundance=cover)%>%
   select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)%>%
   filter(genus_species!='bare ground')
@@ -115,13 +123,10 @@ anpp_invert <- read.csv('Vert Invert_anpp_2009-2015.csv')%>%
   mutate(project_name='invert', calendar_year=date, plot_id=plot, treatment=trt_other_name)%>%
   select(project_name, calendar_year, plot_id, treatment, anpp)
 
-<<<<<<< HEAD
 anpp_nutnet <- read.csv('NutNet_anpp_2007-2015.csv')%>%
   mutate(project_name='nutnet', calendar_year=year, plot_id=plot, treatment=treat_other_name, anpp=total)%>%
   select(project_name, calendar_year, plot_id, treatment, anpp)
 
 
 
-=======
->>>>>>> f1da93856bdcdc5b0254a5e415c03d920055beca
 
