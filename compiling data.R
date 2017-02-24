@@ -23,7 +23,15 @@ sp_bgp<-read.csv("BGPE_spp comp_1986-2012.csv")%>%
 
 sp_invert <- read.csv('Vert Invert_spp comp_2009-2016.csv')%>%
   mutate(project_name='invert', calendar_year=year, plot_id=plot, treatment=trt_other_name, genus_species=taxa, abundance=cover)%>%
-  select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)
+  select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)%>%
+  filter(genus_species!='bare ground')
+
+
+sp_nutnet <- read.csv('NutNet_spp comp_2007-2016.csv')%>%
+  mutate(project_name='nutnet', calendar_year=year, plot_id=plot, treatment=treat_other_name, genus_species=taxa, abundance=cover)%>%
+  select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)%>%
+  filter(genus_species!='bare ground')
+
 
 
 ###anpp data
@@ -46,8 +54,9 @@ anpp_invert <- read.csv('Vert Invert_anpp_2009-2015.csv')%>%
   mutate(project_name='invert', calendar_year=date, plot_id=plot, treatment=trt_other_name)%>%
   select(project_name, calendar_year, plot_id, treatment, anpp)
 
-
-
+anpp_nutnet <- read.csv('NutNet_anpp_2007-2015.csv')%>%
+  mutate(project_name='nutnet', calendar_year=year, plot_id=plot, treatment=treat_other_name, anpp=total)%>%
+  select(project_name, calendar_year, plot_id, treatment, anpp)
 
 
 
