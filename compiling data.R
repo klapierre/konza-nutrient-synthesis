@@ -77,7 +77,6 @@ sp_nutnet <- read.csv('NutNet_spp comp_2007-2016.csv')%>%
   select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)%>%
   filter(genus_species!='bare ground')
 
-<<<<<<< HEAD
 ghostfire_plots<-read.csv("ghost fire_spp comp_2014-2015.csv")%>%
   tbl_df%>%
   mutate(midPlot=paste(Burn.Trt, Block, Plot, sep=""))%>%
@@ -98,8 +97,7 @@ sp_ghostfire_clean<-read.csv("ghost fire_spp comp_2014-2015.csv")%>%
 sp_ghostfire1<-merge(sp_ghostfire_clean, ghostfire_plots, by="midPlot")%>%
   select(-midPlot)
 sp_ghostfire<-merge(sp_ghostfire1, ghostfire_trt, by="plot_id")
-=======
->>>>>>> 00fb541787348d33a2465acb2bc4336ead82dc70
+
 
 ###anpp data
 anpp_bgp_raw<-read.csv("BGPE_ANPP_1986-2015.csv")%>%
