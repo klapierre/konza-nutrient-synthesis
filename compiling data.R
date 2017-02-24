@@ -1,4 +1,11 @@
+library(tidyr)
+library(dplyr)
+
+#meghan's:
 setwd("~/Dropbox/Konza Nutrient Synthesis")
+
+#kim's:
+setwd('C:\\Users\\Kim\\Dropbox\\konza projects\\Konza Nutrient Synthesis')
 
 #treatments
 bgp_trt<-read.csv("BGPE_ANPP_1986-2015.csv")%>%
@@ -26,6 +33,7 @@ sp_bgp_clean<-read.csv("BGPE_spp comp_1986-2012.csv")%>%
 sp_bgp<-merge(bgp_trt, sp_bgp_clean, by="plot_id")           
   
 
+<<<<<<< HEAD
 sp_change<-read.csv("ChANGE_spp comp_2013-2016.csv")%>%
   tbl_df%>%
   mutate(project_name=Experiment,
@@ -36,6 +44,12 @@ sp_change<-read.csv("ChANGE_spp comp_2013-2016.csv")%>%
   mutate(abundance=max(June,August))%>%
   select(project_name, calendar_year, plot_id, genus_species, abundance)
   
+=======
+sp_invert <- read.csv('Vert Invert_spp comp_2009-2016.csv')%>%
+  mutate(project_name='invert', calendar_year=year, plot_id=plot, treatment=trt_other_name, genus_species=taxa, abundance=cover)%>%
+  select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)
+
+>>>>>>> ebc42cc537a4c1a22d63394f4f747966243ee4a2
 
 ###anpp data
 anpp_bgp_raw<-read.csv("BGPE_ANPP_1986-2015.csv")%>%
@@ -50,7 +64,22 @@ anpp_bgp_cleaned<-anpp_bgp_raw%>%
   group_by(calendar_year, plot_id, project_name)%>%
   summarize(anpp=mean(anpp))
          
+<<<<<<< HEAD
 anpp_bgp<-merge(anpp_bgp_cleaned, bgp_trt, by="plot_id")
 
 anpp_pplots<-read.csv("pplots_anpp_2002-2015.csv")%>%
   mutate(project_name="pplots")
+=======
+anpp_pplots<-read.csv("pplots_anpp_2002-2015.csv")
+
+anpp_invert <- read.csv('Vert Invert_anpp_2009-2015.csv')%>%
+  mutate(project_name='invert', calendar_year=date, plot_id=plot, treatment=trt_other_name)%>%
+  select(project_name, calendar_year, plot_id, treatment, anpp)
+
+
+
+
+
+
+
+>>>>>>> ebc42cc537a4c1a22d63394f4f747966243ee4a2
