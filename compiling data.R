@@ -81,6 +81,18 @@ sp_ghostfire_clean<-read.csv("ghost fire_spp comp_2014-2015.csv")%>%
 sp_ghostfire<-merge(sp_ghostfire_clean, ghostfire_trt, by=c('Burn.Trt', 'Block', 'Plot'))%>%
   select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)
 
+sp_restoration <- read.csv('restoration plots_spp comp_1999-2012.csv')%>%
+  filter(DEPTH==1)%>%
+  select(-OBS, -BLOCK, -DEPTH, -NUTRIENT, -RESTORE_YR, -RESIN_NO3, -H, -R, -ANPP, -WPTRT)%>%
+  gather(key=genus_species, value=cover, ANGE:TRRE3)%>%
+  mutate(cover=as.numeric(cover))%>%
+  filter(cover>0)%>%
+  group_by(PLOT, TRTCOMB, YEAR, genus_species)%>%
+  summarise(abundance=mean(cover))%>%
+  ungroup()%>%
+  mutate(project_name='restoration', calendar_year=YEAR, plot_id=PLOT, treatment=TRTCOMB)%>%
+  select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)
+
 
 ###anpp data
 anpp_bgp_raw<-read.csv("BGPE_ANPP_1986-2015.csv")%>%
@@ -114,6 +126,17 @@ anpp_ghostfire <- read.csv('ghost fire_anpp_2014-2015.csv')%>%
   merge(ghostfire_trt, by=c('Burn.Trt', 'Block', 'Plot'))%>%
   select(project_name, calendar_year, plot_id, treatment, anpp)
 
+anpp_restoration <- read.csv('restoration plots_spp comp_1999-2012.csv')%>%
+  filter(DEPTH==1)%>%
+  select(PLOT, SUBPLOT, TRTCOMB, YEAR, ANPP)%>%
+  filter(ANPP!='.')%>%
+  mutate(ANPP=as.numeric(ANPP))%>%
+  group_by(PLOT, TRTCOMB, YEAR)%>%
+  summarise(anpp=mean(ANPP))%>%
+  ungroup()%>%
+  mutate(project_name='restoration', calendar_year=YEAR, plot_id=PLOT, treatment=TRTCOMB)%>%
+  select(project_name, calendar_year, plot_id, treatment, anpp)
+
 
 ###merging
 #species data
@@ -122,7 +145,8 @@ sp_all <- sp_pplots%>%
   rbind(sp_change)%>%
   rbind(sp_invert)%>%
   rbind(sp_nutnet)%>%
-  rbind(sp_ghostfire)
+  rbind(sp_ghostfire)%>%
+  rbind(sp_restoration)
 
 #anpp data
 anpp_all <- anpp_pplots%>%
@@ -130,7 +154,8 @@ anpp_all <- anpp_pplots%>%
 #  rbind(anpp_change)%>%
   rbind(anpp_invert)%>%
   rbind(anpp_nutnet)%>%
-  rbind(anpp_ghostfire)
+  rbind(anpp_ghostfire)%>%
+  rbind(anpp_restoration)
 
 
 
