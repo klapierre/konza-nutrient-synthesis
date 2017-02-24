@@ -18,17 +18,10 @@ bgp_trt<-read.csv("BGPE_ANPP_1986-2015.csv")%>%
   filter(treatment!="__")
 
 change_trt<-read.csv("ChANGE_trt.csv")%>%
-  mutate(plot_id=Plot, treatment=Treatment_Level)%>%
+  mutate(plot_id=Plot, treatment=as.factor(Treatment_Level))%>%
   select(plot_id, treatment)
 
-ghostfire_trt<-read.csv("GF_PlotList.csv")%>%
-  mutate(midPlot=paste(Burn.Trt, Plot, sep=""),
-         treatment=paste(Litter, Nutrient, sep="_"))%>%
-  select(midPlot, treatment)%>%
-  unique()%>%
-  arrange(midPlot)%>%
-  mutate(plot_id=seq(1,72, by=1))%>%
-  select(-midPlot)
+ghostfire_trt<-read.csv("GF_PlotList.csv")
 
 ###species data
 sp_pplots<-read.csv("pplots_spp comp_2002-2015.csv")%>%
@@ -48,12 +41,12 @@ sp_bgp<-merge(bgp_trt, sp_bgp_clean, by="plot_id")
 
 sp_change_clean<-read.csv("ChANGE_spp comp_2013-2016.csv")%>%
   tbl_df%>%
-  mutate(project_name=Experiment,
+  mutate(project_name='ChANGE',
          calendar_year=Year,
-         plot_id=Plot, 
+         plot_id=as.numeric(Plot), 
          genus_species=Species)%>%
   group_by(project_name, calendar_year, plot_id, genus_species)%>%
-  mutate(abundance=max(June,August))%>%
+  mutate(abundance=as.numeric(max(June,August)))%>%
   select(project_name, calendar_year, plot_id, genus_species, abundance)
 
 sp_change<-merge(sp_change_clean, change_trt, by="plot_id")
@@ -77,26 +70,16 @@ sp_nutnet <- read.csv('NutNet_spp comp_2007-2016.csv')%>%
   select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)%>%
   filter(genus_species!='bare ground')
 
-ghostfire_plots<-read.csv("ghost fire_spp comp_2014-2015.csv")%>%
-  tbl_df%>%
-  mutate(midPlot=paste(Burn.Trt, Block, Plot, sep=""))%>%
-  select(midPlot)%>%
-  unique()%>%
-  arrange(midPlot)%>%
-  mutate(plot_id=seq(1,72, by=1))
-
 sp_ghostfire_clean<-read.csv("ghost fire_spp comp_2014-2015.csv")%>%
   mutate(genus_species=Species,
-  project_name=Experiment,
-  calendar_year=Year,
-  midPlot=paste(Burn.Trt,Block, Plot, sep=""))%>%
-  group_by(project_name, calendar_year, midPlot, genus_species)%>%
+  project_name='ghost fire',
+  calendar_year=Year)%>%
+  group_by(project_name, calendar_year, genus_species)%>%
   mutate(abundance=max(June,August))%>%
-  select(project_name, calendar_year, midPlot, genus_species, abundance)
+  select(project_name, calendar_year, genus_species, abundance, Burn.Trt, Block, Plot)
 
-sp_ghostfire1<-merge(sp_ghostfire_clean, ghostfire_plots, by="midPlot")%>%
-  select(-midPlot)
-sp_ghostfire<-merge(sp_ghostfire1, ghostfire_trt, by="plot_id")
+sp_ghostfire<-merge(sp_ghostfire_clean, ghostfire_trt, by=c('Burn.Trt', 'Block', 'Plot'))%>%
+  select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)
 
 
 ###anpp data
@@ -118,8 +101,6 @@ anpp_bgp<-merge(anpp_bgp_cleaned, bgp_trt, by="plot_id")
 anpp_pplots<-read.csv("pplots_anpp_2002-2015.csv")%>%
   mutate(project_name="pplots")
 
-anpp_pplots<-read.csv("pplots_anpp_2002-2015.csv")
-
 anpp_invert <- read.csv('Vert Invert_anpp_2009-2015.csv')%>%
   mutate(project_name='invert', calendar_year=date, plot_id=plot, treatment=trt_other_name)%>%
   select(project_name, calendar_year, plot_id, treatment, anpp)
@@ -128,7 +109,10 @@ anpp_nutnet <- read.csv('NutNet_anpp_2007-2015.csv')%>%
   mutate(project_name='nutnet', calendar_year=year, plot_id=plot, treatment=treat_other_name, anpp=total)%>%
   select(project_name, calendar_year, plot_id, treatment, anpp)
 
-
+anpp_ghostfire <- read.csv('ghost fire_anpp_2014-2015.csv')%>%
+  mutate(project_name='ghost fire', calendar_year=Year, Burn.Trt=ifelse(BurnFreq==1, 'Annual', 'Unburned'), anpp=(Grass+Forb+Woody))%>%
+  merge(ghostfire_trt, by=c('Burn.Trt', 'Block', 'Plot'))%>%
+  select(project_name, calendar_year, plot_id, treatment, anpp)
 
 
 ###merging
@@ -140,10 +124,10 @@ sp_all <- sp_pplots%>%
   rbind(sp_nutnet)%>%
   rbind(sp_ghostfire)
 
-#species data
-anpp_all <- sp_pplots%>%
+#anpp data
+anpp_all <- anpp_pplots%>%
   rbind(anpp_bgp)%>%
-  rbind(anpp_change)%>%
+#  rbind(anpp_change)%>%
   rbind(anpp_invert)%>%
   rbind(anpp_nutnet)%>%
   rbind(anpp_ghostfire)
