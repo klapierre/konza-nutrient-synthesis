@@ -21,6 +21,15 @@ change_trt<-read.csv("ChANGE_trt.csv")%>%
   mutate(plot_id=Plot, treatment=Treatment_Level)%>%
   select(plot_id, treatment)
 
+ghostfire_trt<-read.csv("GF_PlotList.csv")%>%
+  mutate(midPlot=paste(Burn.Trt, Plot, sep=""),
+         treatment=paste(Litter, Nutrient, sep="_"))%>%
+  select(midPlot, treatment)%>%
+  unique()%>%
+  arrange(midPlot)%>%
+  mutate(plot_id=seq(1,72, by=1))%>%
+  select(-midPlot)
+
 ###species data
 sp_pplots<-read.csv("pplots_spp comp_2002-2015.csv")%>%
   mutate(project_name="pplots")
@@ -62,23 +71,24 @@ sp_nutnet <- read.csv('NutNet_spp comp_2007-2016.csv')%>%
 
 ghostfire_plots<-read.csv("ghost fire_spp comp_2014-2015.csv")%>%
   tbl_df%>%
-  mutate(midPlot=paste(Block, Plot, sep=""))%>%
+  mutate(midPlot=paste(Burn.Trt, Block, Plot, sep=""))%>%
   select(midPlot)%>%
   unique()%>%
   arrange(midPlot)%>%
-  mutate(plot_id=seq(1,36, by=1))
+  mutate(plot_id=seq(1,72, by=1))
 
 sp_ghostfire_clean<-read.csv("ghost fire_spp comp_2014-2015.csv")%>%
   mutate(genus_species=Species,
   project_name=Experiment,
   calendar_year=Year,
-  midPlot=paste(Block, Plot, sep=""))%>%
+  midPlot=paste(Burn.Trt,Block, Plot, sep=""))%>%
   group_by(project_name, calendar_year, midPlot, genus_species)%>%
   mutate(abundance=max(June,August))%>%
   select(project_name, calendar_year, midPlot, genus_species, abundance)
 
-sp_ghostfire<-merge(sp_ghostfire_clean, ghostfire_plots, by="midPlot")%>%
+sp_ghostfire1<-merge(sp_ghostfire_clean, ghostfire_plots, by="midPlot")%>%
   select(-midPlot)
+sp_ghostfire<-merge(sp_ghostfire1, ghostfire_trt, by="plot_id")
 
 ###anpp data
 anpp_bgp_raw<-read.csv("BGPE_ANPP_1986-2015.csv")%>%
