@@ -60,7 +60,6 @@ sp_nutnet <- read.csv('NutNet_spp comp_2007-2016.csv')%>%
   select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)%>%
   filter(genus_species!='bare ground')
 
-
 ghostfire_plots<-read.csv("ghost fire_spp comp_2014-2015.csv")%>%
   tbl_df%>%
   mutate(midPlot=paste(Block, Plot, sep=""))%>%
