@@ -62,6 +62,7 @@ sp_invert <- read.csv('Vert Invert_spp comp_2009-2016.csv')%>%
 
 
 sp_nutnet <- read.csv('NutNet_spp comp_2007-2016.csv')%>%
+  select(-date)%>%
   spread(key=season, value=cover, fill=0)%>%
   group_by(year, plot, taxa)%>%
   mutate(cover=max(fall,spring))%>%
