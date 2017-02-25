@@ -125,7 +125,7 @@ sp_ukulinga <- sp_ukulinga_all%>%
 ###anpp data
 anpp_bgp_raw<-read.csv("BGPE_ANPP_1986-2015.csv")%>%
   group_by(RecYear)%>%
-  mutate(maxmonth=max(RecMonth), anpp=10*anpp)%>%
+  mutate(maxmonth=max(RecMonth))%>%
   filter(maxmonth==RecMonth)
 
 anpp_bgp_cleaned<-anpp_bgp_raw%>%
@@ -136,7 +136,7 @@ anpp_bgp_cleaned<-anpp_bgp_raw%>%
   summarize(anpp=mean(anpp))
 
 anpp_bgp<-merge(anpp_bgp_cleaned, bgp_trt, by="plot_id")%>%
-  mutate(project_name=ifelse(treatment=='u_u_n'|treatment=='u_u_c'|treatment=='u_u_p'|treatment=='u_u_b', 'BGP unburned', 'BGP burned'))
+  mutate(project_name=ifelse(treatment=='u_u_n'|treatment=='u_u_c'|treatment=='u_u_p'|treatment=='u_u_b', 'BGP unburned', 'BGP burned'), anpp=10*anpp)
 
 anpp_pplots<-read.csv("pplots_anpp_2002-2015.csv")%>%
   mutate(project_name="pplots")
