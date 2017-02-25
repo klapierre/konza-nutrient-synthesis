@@ -36,7 +36,8 @@ sp_bgp_clean<-read.csv("BGPE_spp comp_1986-2012.csv")%>%
   group_by(project_name, genus_species, plot_id, calendar_year)%>%
   summarize(abundance=mean(abundance))
   
-sp_bgp<-merge(bgp_trt, sp_bgp_clean, by="plot_id")           
+sp_bgp<-merge(bgp_trt, sp_bgp_clean, by="plot_id")%>%
+  mutate(project_name=ifelse(treatment=='u_u_n'|treatment=='u_u_c'|treatment=='u_u_p'|treatment=='u_u_b', 'BGP unburned', 'BGP burned'))
   
 
 sp_change_clean<-read.csv("ChANGE_spp comp_2013-2016.csv")%>%
