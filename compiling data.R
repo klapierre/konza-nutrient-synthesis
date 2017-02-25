@@ -36,8 +36,8 @@ sp_bgp_clean<-read.csv("BGPE_spp comp_1986-2012.csv")%>%
   group_by(project_name, genus_species, plot_id, calendar_year)%>%
   summarize(abundance=mean(abundance))
   
-sp_bgp<-merge(bgp_trt, sp_bgp_clean, by="plot_id")           
-  
+sp_bgp<-merge(bgp_trt, sp_bgp_clean, by="plot_id")%>%
+  mutate(project_name=ifelse(treatment=='u_u_n'|treatment=='u_u_c'|treatment=='u_u_p'|treatment=='u_u_b', 'BGP unburned', 'BGP burned'))
 
 sp_change_clean<-read.csv("ChANGE_spp comp_2013-2016.csv")%>%
   tbl_df%>%
@@ -59,7 +59,6 @@ sp_invert <- read.csv('Vert Invert_spp comp_2009-2016.csv')%>%
   mutate(project_name='invert', calendar_year=year, plot_id=plot, treatment=trt_other_name, genus_species=taxa, abundance=cover)%>%
   select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)%>%
   filter(genus_species!='bare ground')
-
 
 sp_nutnet <- read.csv('NutNet_spp comp_2007-2016.csv')%>%
   select(-date)%>%
@@ -97,19 +96,29 @@ sp_restoration <- read.csv('restoration plots_spp comp_1999-2012.csv')%>%
 knz_spplist <- read.csv('konza_spplist.csv')
 
 sp_ukulinga_all <- read.csv('KNZ UK_spp comp_2005-2010.csv')%>%
+  unite(plot_label, plot, fert, sep='_', remove=F)
+
+ukulinga_plots <- sp_ukulinga_all%>%
+  select(plot_label)%>%
+  unique()%>%
+  arrange(plot_label)%>%
+  mutate(plot_id=seq(1,6, by=1))
+
+sp_ukulinga <- sp_ukulinga_all%>%
+  merge(ukulinga_plots, by=c('plot_label'))%>%
   gather(key=covyear, value=cover, cov2005:cov2010)%>%
+  filter(cover>0)%>%
   separate(covyear, c('cov', 'year'), sep='v')%>%
-  group_by(site, fert, plot, subplot, spnum, year)%>%
+  group_by(site, fert, plot_id, subplot, spnum, year)%>%
   summarise(cover=mean(cover))%>%
   ungroup()%>%
-  group_by(site, fert, plot, spnum, year)%>%
+  group_by(site, fert, plot_id, spnum, year)%>%
   summarise(cover=mean(cover))%>%
   ungroup()%>%
   merge(knz_spplist, by=c('spnum'))%>%
-  mutate(treatment=ifelse(fert==1, 'control', 'N'), project_name=ifelse(site=='1D', 'ukulinga annual', 'ukulinga unburned'), abundance=cover, plot_id=plot, calendar_year=year)%>%
-  select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)%>%
-  filter(abundance>0)
-  
+  mutate(treatment=ifelse(fert==1, 'control', 'N'), project_name=ifelse(site=='1D', 'ukulinga annual', ifelse(site=='4F', 'ukulinga four', 'ukulinga unburned')), abundance=cover, calendar_year=year)%>%
+  select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)
+
   
 
 
@@ -118,30 +127,30 @@ anpp_bgp_raw<-read.csv("BGPE_ANPP_1986-2015.csv")%>%
   group_by(RecYear)%>%
   mutate(maxmonth=max(RecMonth))%>%
   filter(maxmonth==RecMonth)
-  
+
 anpp_bgp_cleaned<-anpp_bgp_raw%>%
   mutate(calendar_year=RecYear,plot_id=Plot, 
          anpp=Lvgrass+Forbs+Cuyrdd+Woody,
          project_name="BGP")%>%
   group_by(calendar_year, plot_id, project_name)%>%
   summarize(anpp=mean(anpp))
-         
 
-anpp_bgp<-merge(anpp_bgp_cleaned, bgp_trt, by="plot_id")
+anpp_bgp<-merge(anpp_bgp_cleaned, bgp_trt, by="plot_id")%>%
+  mutate(project_name=ifelse(treatment=='u_u_n'|treatment=='u_u_c'|treatment=='u_u_p'|treatment=='u_u_b', 'BGP unburned', 'BGP burned'), anpp=10*anpp)
 
 anpp_pplots<-read.csv("pplots_anpp_2002-2015.csv")%>%
   mutate(project_name="pplots")
 
 anpp_invert <- read.csv('Vert Invert_anpp_2009-2015.csv')%>%
-  mutate(project_name='invert', calendar_year=date, plot_id=plot, treatment=trt_other_name)%>%
+  mutate(project_name='invert', calendar_year=date, plot_id=plot, treatment=trt_other_name, anpp=10*anpp)%>%
   select(project_name, calendar_year, plot_id, treatment, anpp)
 
 anpp_nutnet <- read.csv('NutNet_anpp_2007-2015.csv')%>%
-  mutate(project_name='nutnet', calendar_year=year, plot_id=plot, treatment=treat_other_name, anpp=total)%>%
+  mutate(project_name='nutnet', calendar_year=year, plot_id=plot, treatment=treat_other_name, anpp=total, anpp=10*anpp)%>%
   select(project_name, calendar_year, plot_id, treatment, anpp)
 
 anpp_ghostfire <- read.csv('ghost fire_anpp_2014-2015.csv')%>%
-  mutate(project_name='ghost fire', calendar_year=Year, Burn.Trt=ifelse(BurnFreq==1, 'Annual', 'Unburned'), anpp=(Grass+Forb+Woody))%>%
+  mutate(project_name='ghost fire', calendar_year=Year, Burn.Trt=ifelse(BurnFreq==1, 'Annual', 'Unburned'), anpp=(Grass+Forb+Woody), anpp=10*anpp)%>%
   merge(ghostfire_trt, by=c('Burn.Trt', 'Block', 'Plot'))%>%
   select(project_name, calendar_year, plot_id, treatment, anpp)
 
@@ -166,7 +175,7 @@ sp_all <- sp_pplots%>%
   rbind(sp_nutnet)%>%
   rbind(sp_ghostfire)%>%
   rbind(sp_restoration)%>%
-  rbind(sp_ukulinga_all)
+  rbind(sp_ukulinga)
 
 #anpp data
 anpp_all <- anpp_pplots%>%
