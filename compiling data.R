@@ -97,19 +97,29 @@ sp_restoration <- read.csv('restoration plots_spp comp_1999-2012.csv')%>%
 knz_spplist <- read.csv('konza_spplist.csv')
 
 sp_ukulinga_all <- read.csv('KNZ UK_spp comp_2005-2010.csv')%>%
+  unite(plot_label, plot, fert, sep='_', remove=F)
+
+ukulinga_plots <- sp_ukulinga_all%>%
+  select(plot_label)%>%
+  unique()%>%
+  arrange(plot_label)%>%
+  mutate(plot_id=seq(1,6, by=1))
+
+sp_ukulinga <- sp_ukulinga_all%>%
+  merge(ukulinga_plots, by=c('plot_label'))%>%
   gather(key=covyear, value=cover, cov2005:cov2010)%>%
+  filter(cover>0)%>%
   separate(covyear, c('cov', 'year'), sep='v')%>%
-  group_by(site, fert, plot, subplot, spnum, year)%>%
+  group_by(site, fert, plot_id, subplot, spnum, year)%>%
   summarise(cover=mean(cover))%>%
   ungroup()%>%
-  group_by(site, fert, plot, spnum, year)%>%
+  group_by(site, fert, plot_id, spnum, year)%>%
   summarise(cover=mean(cover))%>%
   ungroup()%>%
   merge(knz_spplist, by=c('spnum'))%>%
-  mutate(treatment=ifelse(fert==1, 'control', 'N'), project_name=ifelse(site=='1D', 'ukulinga annual', 'ukulinga unburned'), abundance=cover, plot_id=plot, calendar_year=year)%>%
-  select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)%>%
-  filter(abundance>0)
-  
+  mutate(treatment=ifelse(fert==1, 'control', 'N'), project_name=ifelse(site=='1D', 'ukulinga annual', ifelse(site=='4F', 'ukulinga four', 'ukulinga unburned')), abundance=cover, calendar_year=year)%>%
+  select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)
+
   
 
 
@@ -166,7 +176,7 @@ sp_all <- sp_pplots%>%
   rbind(sp_nutnet)%>%
   rbind(sp_ghostfire)%>%
   rbind(sp_restoration)%>%
-  rbind(sp_ukulinga_all)
+  rbind(sp_ukulinga)
 
 #anpp data
 anpp_all <- anpp_pplots%>%
