@@ -3,6 +3,7 @@ library(dplyr)
 library(ggplot2)
 library(vegan)
 library(gridExtra)
+library(doBy)
 
 #meghan's:
 setwd("~/Dropbox/Konza Nutrient Synthesis")
@@ -325,38 +326,56 @@ grid.arrange(pplots, BGP_ub, BGP_b, nutnet, invert, restoration, uk_annual, uk_f
 ##### doing NMDS with all experiments
 #####
 
-lst_yr<-spdata2%>%
-  group_by(project_name)%>%
-  mutate(lastyear=max(calendar_year))%>%
-  filter(calendar_year==lastyear)%>%
-  select(project_name, treatment, plot_id, abundance, genus_species, control)
-
 sp_names<-spdata2%>%
   select(genus_species)%>%
   unique()
+##export this and reimport corrected names.
+#write.csv(sp_names, "species_list_allexp.csv", row.names=F)
+sp_names_clean<-read.csv("species_list_allexp_cleaned.csv")
 
-write.csv(sp_names, "species_list_allexp.csv", row.names=F)
+spdata3<-merge(sp_names_clean, spdata, by="genus_species")
 
-###can't do this because species have different names ABORT
+####this is not working for BGP! why???
+###export and reimport with BGP fixed
+# bgp<-spdata%>%
+#   filter(project_name=="BGP unburned"|project_name=="BGP burned")
+# 
+# write.csv(bgp,"species_data_BGP_problems.csv", row.names = F)
+
+bgpfix<-read.csv("species_data_BGP_problems_fix.csv")
+
+bgpmerge<-merge(bgpfix, sp_names_clean, by="genus_species")
+
+spdata4<-rbind(bgpmerge, spdata3)
+
+###finally do NMDS
+lst_yr<-spdata4%>%
+  group_by(project_name)%>%
+  mutate(lastyear=max(calendar_year))%>%
+  filter(calendar_year==lastyear)%>%
+  select(project_name, treatment, plot_id, abundance, species)%>%
+  filter(project_name!="ChANGE"&project_name!="ghost fire")%>%
+  filter(treatment!="caged"&treatment!="caged_insecticide"&treatment!="fence"&treatment!="NPK_caged"&treatment!="NPK_caged_insecticide"&treatment!="NPKfence")
 
 sp_wide<-lst_yr%>%
-  spread(genus_species, abundance, fill=0)
+  spread(species, abundance, fill=0)
 
-plots<-pplots_wide[,1:2]
-mds<-metaMDS(pplots_wide[,3:53], autotransform=FALSE, shrink=FALSE)
+mds<-metaMDS(sp_wide[,4:131],autotransform=FALSE, shrink=FALSE, trymax = 1000)
 mds
 
-adonis(pplots_wide[,3:53]~treatment, pplots_wide)
+###plotting this
+theme_set(theme_bw(12))
 
-#differences in dispersion?
-dist<-vegdist(pplots_wide[,3:53])
-betadisp<-betadisper(dist,pplots_wide$treatment,type="centroid")
-betadisp
-permutest(betadisp)
-
+plots<-as.data.frame(sp_wide[,1:3])
 scores <- data.frame(scores(mds, display="sites"))  # Extracts NMDS scores for year "i" #
-scores2<- cbind(plots, scores) # binds the NMDS scores of year i to all years previously run
+scores2<- cbind(plots, scores)
+
+funcs<-function(x)c(mn=mean(x),se=sd(x)/sqrt(length(x)))
+means<-summaryBy(NMDS1+NMDS2~treatment, data=scores2, FUN=funcs)
 
 ggplot(scores2, aes(x=NMDS1, y=NMDS2, color=treatment))+
-  geom_point(size=5)
+  geom_point(size=5,aes(shape=project_name))+
+  scale_shape_manual(name="Experiment", values=c(0,1,2,5,6,7,9,10,12))+
+  scale_color_manual(name="Treatment", values=c("purple","green","red","blue","purple","green","red","blue", "black","green","black","black","red","green","blue","blue","blue","red","purple","purple","purple","red","purple","purple","purple","purple","blue","blue"))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
