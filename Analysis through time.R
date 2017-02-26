@@ -4,6 +4,7 @@ library(ggplot2)
 library(vegan)
 library(gridExtra)
 library(doBy)
+library(grid)
 
 #meghan's:
 setwd("~/Dropbox/Konza Nutrient Synthesis")
@@ -378,4 +379,66 @@ ggplot(scores2, aes(x=NMDS1, y=NMDS2, color=treatment))+
   scale_shape_manual(name="Experiment", values=c(0,1,2,5,6,7,9,10,12))+
   scale_color_manual(name="Treatment", values=c("purple","green","red","blue","purple","green","red","blue", "black","green","black","black","red","green","blue","blue","blue","red","purple","purple","purple","red","purple","purple","purple","purple","blue","blue"))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+
+
+
+
+#generating figure of mean change by experiment year
+experimentYear <- read.csv('experiment years.csv')
+
+meanChangeTime <- mean_change%>%
+  filter(project_name!='ChANGE'&project_name!='ghost fire')%>%
+  merge(experimentYear, by=c('project_name', 'calendar_year'))
+
+meanChangeTimeSubset <- meanChangeTime%>%
+  filter(treatment=='b_u_n'|treatment=='b_u_b'|treatment=='u_u_n'|treatment=='u_u_b'|treatment=='N2P0'|treatment=='N2P1'|treatment=='N2P2'|treatment=='N2P3'|treatment=='N'|treatment=='NP'|treatment=='NK'|treatment=='NPK')%>%
+  filter(project_name!='ukulinga annual'&project_name!='ukulinga four'&project_name!='ukulinga unburned'&project_name!='restoration')
+
+meanChangeTimeSubset_nochange <- meanChangeTime%>%
+  filter(project_name=='ukulinga annual'|project_name=='ukulinga four'|project_name=='ukulinga unburned'|project_name=='restoration')%>%
+  filter(treatment!='C')
+
+
+theme_set(theme_bw())
+theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=element_text(size=16),
+             axis.title.y=element_text(size=20, angle=90, vjust=0.5), axis.text.y=element_text(size=16),
+             plot.title = element_text(size=24, vjust=2),
+             panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
+             legend.title=element_text(size=20), legend.text=element_text(size=20))
+
+
+changePlot <- ggplot(data=subset(meanChangeTimeSubset,experiment_year>0), aes(x=experiment_year, y=mean_change, color=project_name)) +
+  geom_point(size=5) +
+  geom_line(aes(group=interaction(project_name,treatment))) +
+  xlab('Experiment Year') +
+  ylab('Community Change') +
+  scale_color_discrete(name='Experiment') +
+  ylim(0,0.8) +
+  xlim(0,30)
+
+nochangePlot <- ggplot(data=meanChangeTimeSubset_nochange, aes(x=experiment_year, y=mean_change, color=project_name)) +
+  geom_point(size=5) +
+  geom_line(aes(group=interaction(project_name,treatment))) +
+  xlab('Experiment Year') +
+  ylab('Community Change') +
+  scale_color_discrete(name='Experiment') +
+  ylim(0,0.8) +
+  xlim(0,30)
+
+pushViewport(viewport(layout=grid.layout(2,1)))
+print(changePlot, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+print(nochangePlot, vp=viewport(layout.pos.row=2, layout.pos.col=1))
+
+
+
+
+
+
+
+
+
+
+
+
 
