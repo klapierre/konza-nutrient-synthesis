@@ -371,11 +371,16 @@ scores <- data.frame(scores(mds, display="sites"))  # Extracts NMDS scores for y
 scores2<- cbind(plots, scores)
 
 funcs<-function(x)c(mn=mean(x),se=sd(x)/sqrt(length(x)))
-means<-summaryBy(NMDS1+NMDS2~treatment, data=scores2, FUN=funcs)
+means<-summaryBy(NMDS1+NMDS2~treatment+project_name, data=scores2, FUN=funcs)
 
-ggplot(scores2, aes(x=NMDS1, y=NMDS2, color=treatment))+
-  geom_point(size=5,aes(shape=project_name))+
-  scale_shape_manual(name="Experiment", values=c(0,1,2,5,6,7,9,10,12))+
+ggplot(means, aes(x=NMDS1.mn, y=NMDS2.mn, color=treatment))+
+  geom_point(size=8,aes(shape=project_name))+
+  geom_errorbar(aes(ymin=NMDS2.mn-NMDS2.se, ymax=NMDS2.mn+NMDS2.se),color="black")+
+  geom_errorbarh(aes(xmin=NMDS1.mn-NMDS1.se, xmax=NMDS1.mn+NMDS1.se),color="black")+
+  scale_shape_manual(name="Experiment", values=c(15,16,4,17,18,11,9,10,13))+
   scale_color_manual(name="Treatment", values=c("purple","green","red","blue","purple","green","red","blue", "black","green","black","black","red","green","blue","blue","blue","red","purple","purple","purple","red","purple","purple","purple","purple","blue","blue"))+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  xlab("NMDS1")+
+  ylab("NMDS2")
+
 
