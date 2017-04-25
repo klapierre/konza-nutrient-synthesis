@@ -34,6 +34,7 @@ setwd('C:\\Users\\Kim\\Dropbox\\konza projects\\Konza Nutrient Synthesis')
 #get data
 core <- read.csv('Konza_core data_spp comp_PVC021.csv')
 
+#note -- set first year as 1993 for all watersheds!
 coreClean <- core%>%
   #get a species column
   unite(genus_species, AB_GENUS, AB_SPECIES)%>%
@@ -49,7 +50,8 @@ coreClean <- core%>%
   summarise(cover=mean(cover))%>%
   ungroup()%>%
   mutate(plot_id=Transect)%>%
-  select(-Transect)
+  select(-Transect)%>%
+  filter(year>1992)
 
 #get first and last year of data for each watershed
 coreFirstLast <- coreClean%>%
@@ -62,7 +64,7 @@ coreFirstLast <- coreClean%>%
 
 
 ###NMDS for first and last years
-coreNMDS <- metaMDS(coreFirstLast[,9:288])
+coreNMDS <- metaMDS(coreFirstLast[,9:286])
 
 #gathers NMDS scores
 coreScores <- data.frame(scores(coreNMDS, display='sites'))
@@ -85,6 +87,7 @@ ggplot(data=coreScoresTrt, aes(x=NMDS1, y=NMDS2, color=trt, shape=soil)) +
                     labels=c('Grazed, 1yr', 'Grazed, 20yr', 'Grazed, 4yr', 'Ungrazed, 1yr', 'Ungrazed, 2yr', 'Ungrazed, 20yr', 'Ungrazed, 4yr')) +
   scale_shape_discrete(name='Soil Type') +
   facet_wrap(~time)
+#export at 1600x1000
 
   
 # #plot NMDS with all years in one panel
@@ -188,4 +191,5 @@ ggplot(data=barGraphStats(data=mean_change, variable="mean_change", byFactorName
   xlab('Year') +
   scale_color_manual(values=c('#FF3300', '#330033')) +
   facet_grid(graze~burn)
+#export at 1500x1000
   
