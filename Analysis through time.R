@@ -5,6 +5,7 @@ library(vegan)
 library(gridExtra)
 library(doBy)
 library(grid)
+library(codyn)
 
 #meghan's:
 setwd("~/Dropbox/Konza Nutrient Synthesis")
@@ -86,7 +87,7 @@ anpp_rel1<-merge(anppdata, anpp_control, by=c("project_name","calendar_year"))%>
 anpp_rel<-merge(anpp_rel1, controls, by=c("treatment","project_name"))%>%
   filter(control!=1)
 
-write.csv(anpp_rel,"anpp_percent_change.csv", row.names = F)
+# write.csv(anpp_rel,"anpp_percent_change.csv", row.names = F)
 
 nit_anpp<-merge(anpp_rel, nitrogen, by=c("project_name","treatment"))%>%
   filter(nitrogen==1)
@@ -97,8 +98,8 @@ nit_anpp<-merge(anpp_rel, nitrogen, by=c("project_name","treatment"))%>%
 #   geom_hline(yintercept = 0)+
 #   #theme(legend.position = "none")+
 #   facet_wrap(~project_name, scales="free")
-# 
-# nit_anpp_precip<-merge(nit_anpp, precip, by="calendar_year")
+
+nit_anpp_precip<-merge(nit_anpp, precip, by="calendar_year")
 
 ##graphing this
 ggplot(data=anppdata, aes(x=calendar_year, y=anpp, group=treatment))+
@@ -194,7 +195,7 @@ for(i in 1:length(pjt_nm)) {
 mean_change<-merge(bc_mean_change, controls, by=c("treatment","project_name"))%>%
   filter(control!=1)
 
-write.csv(mean_change, "community_change_nut_experiments.csv", row.names = F)
+# write.csv(mean_change, "community_change_nut_experiments.csv", row.names = F)
 
 ###graphing BC
 ##overall
@@ -388,8 +389,241 @@ ggplot(means, aes(x=NMDS1.mn, y=NMDS2.mn, color=treatment))+
 
 
 
+###getting species appearances and disappearances to compare to the mean change through time
+# codyn function modification ---------------------------------------------
+#modifying codyn functions to output integer numbers of species appearing and disappearing, plus total spp number over two year periods, rather than ratios
+#modifying codyn functions to output turnover from first year to all other years, rather than one year to the next
+turnover_allyears <- function(df, 
+                              time.var, 
+                              species.var, 
+                              abundance.var, 
+                              metric=c("total", "disappearance","appearance")) {
+  
+  # allows partial argument matching
+  metric = match.arg(metric) 
+  
+  # sort and remove 0s
+  df <- df[order(df[[time.var]]),]
+  df <- df[which(df[[abundance.var]]>0),]
+  
+  ## split data by year
+  templist <- split(df, df[[time.var]])
+  
+  ## create two time points (first year and each other year)
+  t1 <- templist[1]
+  t2 <- templist[-1]
+  
+  ## calculate turnover for across all time points
+  out <- Map(turnover_twoyears, t1, t2, species.var, metric)
+  output <- as.data.frame(unlist(out))
+  names(output)[1] = metric
+  
+  ## add time variable column
+  alltemp <- unique(df[[time.var]])
+  output[time.var] =  alltemp[2:length(alltemp)]
+  
+  # results
+  return(output)
+}
 
-#generating figure of mean change by experiment year
+turnover_twoyears <- function(d1, d2, 
+                              species.var, 
+                              metric=c("total", "disappearance","appearance")){
+  
+  # allows partial argument matching
+  metric = match.arg(metric)
+  
+  # create character vectors of unique species from each df
+  d1spp <- as.character(unique(d1[[species.var]]))
+  d2spp <- as.character(unique(d2[[species.var]]))
+  
+  # ID shared species
+  commspp <- intersect(d1spp, d2spp)
+  
+  # count number not present in d2
+  disappear <- length(d1spp)-length(commspp)
+  
+  # count number that appear in d2
+  appear <- length(d2spp)-length(commspp)
+  
+  # calculate total richness
+  totrich <- sum(disappear, appear, length(commspp))
+  
+  # output based on metric 
+  if(metric == "total"){
+    output <- totrich
+  } else {
+    if(metric == "appearance"){
+      output <- appear
+    } else {
+      if(metric == "disappearance"){
+        output <- disappear
+      }
+    }
+  }
+  
+  # results
+  return(output)
+}
+
+
+# generating appearances and disappearances for each experiment ---------------------------------------------
+#make a new dataframe with just the label
+spdata3 <- spdata2%>%
+  mutate(id2=paste(project_name, treatment, sep='::'))
+
+exp_code=spdata3%>%
+  select(id2)%>%
+  unique()
+
+#makes an empty dataframe
+for.analysis=data.frame(row.names=1)
+
+for(i in 1:length(exp_code$id2)) {
+  
+  #creates a dataset for each unique trt, exp combo
+  subset=spdata3[spdata3$id2==as.character(exp_code$id2[i]),]%>%
+    select(id2, calendar_year, genus_species, abundance, plot_id)%>%
+    group_by(id2, calendar_year, plot_id, genus_species)%>%
+    summarise(abundance=max(abundance))%>%
+    ungroup()
+  
+  #need this to keep track of experiment labels
+  labels=subset%>%
+    select(id2, calendar_year)%>%
+    unique()
+  
+  #calculating appearances and disappearances
+  appear<-turnover_allyears(df=subset, time.var='calendar_year', species.var='genus_species', abundance.var='abundance', metric='appearance')
+  disappear<-turnover_allyears(df=subset, time.var='calendar_year', species.var='genus_species', abundance.var='abundance', metric='disappearance')
+  total<-turnover_allyears(df=subset, time.var='calendar_year', species.var='genus_species', abundance.var='abundance', metric='total')
+  
+  #merging back with labels to get back experiment labels
+  turnover<-merge(appear, disappear, by=c('calendar_year'))
+  turnoverAll<-merge(turnover, total, by=c('calendar_year'))
+  turnoverLabel<-merge(turnoverAll, labels, by=c('calendar_year'), all=T)
+  turnoverLabel[is.na(turnoverLabel)] <- 0
+  
+  #pasting into the dataframe made for this analysis
+  for.analysis=rbind(turnoverLabel, for.analysis)  
+}
+
+for.analysis2 <- for.analysis%>%
+  gather(key=variable, value=num_spp, appearance:total)%>%
+  separate(col=id2, into=c('project_name', 'treatment'), sep='::')%>%
+  mutate(num_spp2=ifelse(variable=='disappearance', -1*num_spp, num_spp))
+  
+
+#generating figure of appearances/disappearances for each experiment
+pplots<-
+  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="pplots"&treatment!="N1P1"&treatment!="N1P2"&treatment!="N1P3"), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
+  geom_point(aes(color=treatment), size=5)+
+  scale_color_manual(name="Treatment",breaks=c("N1P0", "N2P0", "N2P1", "N2P2", "N2P3"), labels=c("N0 P0", "N10 P0","N10 P2.5","N10 P5","N10 P10"), values=c("blue", "red","purple","purple","purple"))+
+  geom_line()+
+  geom_vline(xintercept = 2004, linetype="longdash")+
+  geom_vline(xintercept = 2006)+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  xlab("Year")+
+  ylab("Species Change")+
+  ggtitle("Phosphorus Plots")
+
+BGP_ub<-
+  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="BGP unburned"&treatment!="u_u_p"), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
+  geom_point(aes(color=treatment), size=5)+
+  scale_color_manual(name="Treatment", breaks=c("u_u_c", "u_u_n", "u_u_b"), labels=c("N0 P0", "N10 P0", "N10 P1"), values=c("blue","red","purple"))+
+  geom_line()+
+  geom_vline(xintercept = 1989)+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  xlab("Year")+
+  ylab("Species Change")+
+  ggtitle("Belowground Plots Unburned")
+
+BGP_b<-
+  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="BGP burned"&treatment!="b_u_p"), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
+  geom_point(aes(color=treatment), size=5)+
+  scale_color_manual(name="Treatment",breaks=c("b_u_c", "b_u_n", "b_u_b"), labels=c("N0 P0", "N10 P0", "N10 P1"), values=c("blue","red","purple"))+
+  geom_line()+
+  geom_vline(xintercept = 1989,linetype="longdash")+
+  geom_vline(xintercept = 1994)+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  xlab("Year")+
+  ylab("Species Change")+
+  ggtitle("Belowground Plots Burned")
+
+nutnet<-
+  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="nutnet"&treatment!="fence"&treatment!="NPKfence"&treatment!="P"&treatment!="K"&treatment!="PK"), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
+  geom_point(aes(color=treatment), size=5)+
+  scale_color_manual(name="Treatment",breaks=c("control", "N", "NP", "NK", "NPK"), labels=c("N0 P0 K0","N10 P0 K0" ,"N10 P10 K0","N10 P0 K10" ,"N10 P10 K10"), values=c("blue","red", "purple", "purple","purple"))+
+  geom_line()+
+  geom_vline(xintercept = 2010,linetype="longdash")+
+  geom_vline(xintercept = 2012)+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  xlab("Year")+
+  ylab("Species Change")+
+  ggtitle("Nutrient Network")
+
+invert<-
+  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="invert"&treatment!="caged"&treatment!="caged_insecticide"&treatment!="NPK_caged_insecticide"&treatment!="NPK_caged"&treatment!="insecticide"), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
+  geom_point(aes(color=treatment), size=5)+
+  scale_color_manual(name="Treatment",breaks=c("control", "NPK", "NPK_insecticide"), labels=c("N0 P0 K0", "N10 P10 K10", "N10 P10 K10\n& Insecticide"), values=c("blue","purple","purple"))+
+  geom_line()+
+  geom_vline(xintercept = 2011,linetype="longdash")+
+  geom_vline(xintercept = 2013)+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  xlab("Year")+
+  ylab("Species Change")+
+  ggtitle("Invertebrate Removal")
+
+restoration<-
+  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="restoration"&treatment!='C'), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
+  geom_point(aes(color=treatment), size=5)+
+  scale_color_manual(name="Treatment",breaks=c('control', 'N'), labels=c("N0", "N5"), values=c("blue","red"))+
+  geom_line()+
+  geom_vline(xintercept = 2005, linetype="longdash")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  xlab("Year")+
+  ylab("Species Change")+
+  ggtitle("Restoration Plots")
+
+uk_annual<-
+  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="ukulinga annual"), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
+  geom_point(aes(color=treatment), size=5)+
+  scale_color_manual(name="Treatment", breaks=c("control", "N"), labels=c("N0", "N10"), values=c("blue", "red"))+
+  geom_line()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  xlab("Year")+
+  ylab("Mean Change")+
+  ggtitle("Ukulinga Annual Burn")
+
+uk_four<-
+  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="ukulinga four"), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
+  geom_point(aes(color=treatment), size=5)+
+  scale_color_manual(name="Treatment", breaks=c("control", "N"), labels=c("N0", "N10"), values=c("blue", "red"))+
+  geom_line()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  xlab("Year")+
+  ylab("Mean Change")+
+  ggtitle("Ukulinga 4-Yr Burn")
+
+uk_ub<-
+  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="ukulinga unburned"), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
+  geom_point(aes(color=treatment), size=5)+
+  scale_color_manual(name="Treatment", breaks=c("control", "N"), labels=c("N0", "N10"), values=c("blue", "red"))+
+  geom_line()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  xlab("Year")+
+  ylab("Mean Change")+
+  ggtitle("Ukulinga Unburned")
+
+grid.arrange(pplots, BGP_ub, BGP_b, nutnet, invert, restoration, uk_annual, uk_four, uk_ub)
+#export at 2400x1600
+
+
+
+
+
+
+#generating figure of mean change by experiment year with all experiments included in one panel
 experimentYear <- read.csv('experiment years.csv')
 
 meanChangeTime <- mean_change%>%
