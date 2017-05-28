@@ -11,7 +11,16 @@ library(codyn)
 setwd("~/Dropbox/Konza Nutrient Synthesis")
 
 #kim's:
-setwd('C:\\Users\\Kim\\Dropbox\\konza projects\\Konza Nutrient Synthesis')
+setwd('C:\\Users\\Kim\\Dropbox\\konza projects\\Konza Nutrient Synthesis\\Threshold Project\\data')
+
+theme_set(theme_bw())
+theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=element_text(size=16),
+             axis.title.y=element_text(size=20, angle=90, vjust=0.5), axis.text.y=element_text(size=16),
+             plot.title = element_text(size=24, vjust=2),
+             panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
+             legend.title=element_blank(), legend.text=element_text(size=20))
+
+
 
 #' @x the vector of abundances of each species
 S<-function(x){
@@ -19,15 +28,35 @@ S<-function(x){
   length(x1)
 }
 
+###bar graph summary statistics function
+#barGraphStats(data=, variable="", byFactorNames=c(""))
+
+barGraphStats <- function(data, variable, byFactorNames) {
+  count <- length(byFactorNames)
+  N <- aggregate(data[[variable]], data[byFactorNames], FUN=length)
+  names(N)[1:count] <- byFactorNames
+  names(N) <- sub("^x$", "N", names(N))
+  mean <- aggregate(data[[variable]], data[byFactorNames], FUN=mean)
+  names(mean)[1:count] <- byFactorNames
+  names(mean) <- sub("^x$", "mean", names(mean))
+  sd <- aggregate(data[[variable]], data[byFactorNames], FUN=sd)
+  names(sd)[1:count] <- byFactorNames
+  names(sd) <- sub("^x$", "sd", names(sd))
+  preSummaryStats <- merge(N, mean, by=byFactorNames)
+  finalSummaryStats <- merge(preSummaryStats, sd, by=byFactorNames)
+  finalSummaryStats$se <- finalSummaryStats$sd / sqrt(finalSummaryStats$N)
+  return(finalSummaryStats)
+}  
+
 ##first get a list of controls
 controls<-read.csv("Konza_nutrient synthesis_spp comp.csv")%>%
-  mutate(control=ifelse(treatment=="N1P0", 1, ifelse(treatment=="b_u_c", 1, ifelse(treatment==0, 1, ifelse(treatment=="control", 1, ifelse(treatment=="control_control", 1, ifelse(treatment=="u_u_c", 1, 0)))))))%>%
+  mutate(control=ifelse(treatment=="N1P0"|treatment=="b_u_c"|treatment==0|treatment=="control"|treatment=="control_control"|treatment=="u_u_c", 1, 0))%>%
   select(project_name, treatment, control)%>%
   unique()
 
-##select N10 treatments
+##select N only treatments
 nitrogen<-read.csv("Konza_nutrient synthesis_spp comp.csv")%>%
-  mutate(nitrogen=ifelse(treatment=="N2P0", 1, ifelse(treatment=="N2P3",1, ifelse(treatment=="b_u_n", 1, ifelse(treatment=="b_u_b",1, ifelse(treatment==10, 1, ifelse(treatment==5, 1, ifelse(treatment=="NPK", 1, ifelse(treatment=="N",1, ifelse(treatment=="control_nitrogen", 1, ifelse(treatment=="NP", 1,0)))))))))))%>%
+  mutate(nitrogen=ifelse(treatment=="N2P0"|treatment=="b_u_n"|treatment==10|treatment=="NPK"|treatment=="N"|treatment=="control_nitrogen", 1, 0))%>%
   select(project_name, treatment, nitrogen)%>%
   unique()
 
@@ -38,7 +67,9 @@ precip<-read.csv("WETDRY.csv")%>%
 
 ##do species data
 spdata<-read.csv("Konza_nutrient synthesis_spp comp.csv")%>%
-  mutate(id=paste(project_name, calendar_year, sep="::"))
+  mutate(id=paste(project_name, calendar_year, sep="::"))%>%
+  #filter pre-treatment data
+  filter(id!='ChANGE::2013'&id!='ghost fire::2014'&id!='nutnet::2007'&id!='pplots::2002'&id!='ukulinga annual::2005'&id!='ukulinga four::2005'&id!='ukulinga unburned::2005')
 
 ##richness
 sp_rich <- group_by(spdata, project_name, treatment, calendar_year, plot_id) %>% 
@@ -107,13 +138,13 @@ ggplot(data=anppdata, aes(x=calendar_year, y=anpp, group=treatment))+
   geom_smooth(method = "lm", se=F, color="black")+
   facet_wrap(~project_name, scales="free")
 
-###looking at bgp only
-bgp_precip<-nit_anpp_precip%>%
-  filter(project_name=="BGP")%>%
-  mutate(shift=as.factor(ifelse(calendar_year>1991, 1, 0)))
-
-ggplot(data=bgp_precip, aes(x=gprecip, y=PC_anpp, group=treatment))+
-    geom_point(aes(color=shift, shape=treatment), size=5)
+# ###looking at bgp only
+# bgp_precip<-nit_anpp_precip%>%
+#   filter(project_name=="BGP")%>%
+#   mutate(shift=as.factor(ifelse(calendar_year>1991, 1, 0)))
+# 
+# ggplot(data=bgp_precip, aes(x=gprecip, y=PC_anpp, group=treatment))+
+#     geom_point(aes(color=shift, shape=treatment), size=5)
 
 ###looking with precip and not percent change
 nitrogen_only<-read.csv("Konza_nutrient synthesis_spp comp.csv")%>%
@@ -205,12 +236,29 @@ ggplot(data=mean_change, aes(x=calendar_year, y=mean_change, group=treatment))+
   theme(legend.position="none")+
   facet_wrap(~project_name, scales = "free_x")
 
+###graphs for N treatments only
+#pplots only as an example
+  ggplot(data=subset(mean_change, project_name=="pplots"&treatment!='N1P0'&treatment!='N1P1'&treatment!='N1P2'&treatment!='N1P3'&treatment!='N2P1'&treatment!='N2P2'&treatment!='N2P3'), aes(x=as.numeric(calendar_year), y=mean_change))+
+  geom_point(size=5)+
+  geom_line()+
+  geom_vline(xintercept = 2004, linetype="longdash")+
+  geom_vline(xintercept = 2007)+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  xlab("Year")+
+  ylab("Community Change")+
+  ggtitle("Phosphorus Plots")+
+  ylim(min=0, max=0.8)+
+  xlim(min=2002.5, max=2015.5)
+  #export at 1000x600
+
+
+
+###evidence that multiple nutrient limitation does not limit change (just N alone is as much change as N plus other nutrients)
 ##pretty graphs
 # red= n only
 # blue=p only
 # purple=n+p
 #other trt=black
-theme_set(theme_bw(12))
 
 pplots<-
   ggplot(data=subset(mean_change, project_name=="pplots"), aes(x=as.numeric(calendar_year), y=mean_change, group=treatment))+
@@ -223,7 +271,9 @@ pplots<-
   xlab("Year")+
   ylab("Community Change")+
   ggtitle("Phosphorus Plots")+
-  ylim(min=0, max=0.8)
+  ylim(min=0, max=0.8)+
+  xlim(min=2002.5, max=2015.5)
+#export at 1000x600
 
 BGP_ub<-
 ggplot(data=subset(mean_change, project_name=="BGP unburned"), aes(x=as.numeric(calendar_year), y=mean_change, group=treatment))+
@@ -251,9 +301,9 @@ ggplot(data=subset(mean_change, project_name=="BGP burned"), aes(x=as.numeric(ca
   ylim(min=0, max=0.8)
 
 nutnet<-
-ggplot(data=subset(mean_change, project_name=="nutnet"&treatment!="fence"&treatment!="NPKfence"), aes(x=as.numeric(calendar_year), y=mean_change, group=treatment))+
+ggplot(data=subset(mean_change, project_name=="nutnet"&treatment!="fence"&treatment!="NPKfence"&treatment!='K'&treatment!='PK'&treatment!='NK'), aes(x=as.numeric(calendar_year), y=mean_change, group=treatment))+
   geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N10 P0","N0 P0 K10" ,"N10 P0 K10","N10 P10 K0" ,"N10 P10 K10","N0 P10 K0", "N0 P10 K10"), values=c("red","black", "red", "purple","purple","blue","blue"))+
+  scale_color_manual(name="Treatment",labels=c("N10P0","N10P10K0" ,"N10P10K10","N0P10K0"), values=c("red","purple", "purple","blue"))+
   geom_line()+
   geom_vline(xintercept = 2010,linetype="longdash")+
   geom_vline(xintercept = 2012)+
@@ -266,7 +316,7 @@ ggplot(data=subset(mean_change, project_name=="nutnet"&treatment!="fence"&treatm
 invert<-
 ggplot(data=subset(mean_change, project_name=="invert"&treatment!="caged"&treatment!="caged_insecticide"&treatment!="NPK_caged_insecticide"&treatment!="NPK_caged"), aes(x=as.numeric(calendar_year), y=mean_change, group=treatment))+
   geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N10 P10 K10", "Insecticide", "N10 P10 K10\n& Insecticide"), values=c("purple","black","purple"))+
+  scale_color_manual(name="Treatment",labels=c("N10P10K10", "Insecticide", "N10P10K10\n& Insecticide"), values=c("purple","black","purple"))+
   geom_line()+
   geom_vline(xintercept = 2011,linetype="longdash")+
   geom_vline(xintercept = 2013)+
@@ -276,53 +326,53 @@ ggplot(data=subset(mean_change, project_name=="invert"&treatment!="caged"&treatm
   ggtitle("Invertebrate Removal")+
   ylim(min=0, max=0.8)
 
-restoration<-
-ggplot(data=subset(mean_change, project_name=="restoration"), aes(x=as.numeric(calendar_year), y=mean_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N5", "Carbon"), values=c("red","black"))+
-  geom_line()+
-  geom_vline(xintercept = 2005, linetype="longdash")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Community Change")+
-  ggtitle("Restoration Plots")+
-  ylim(min=0, max=0.8)
+# restoration<-
+# ggplot(data=subset(mean_change, project_name=="restoration"), aes(x=as.numeric(calendar_year), y=mean_change, group=treatment))+
+#   geom_point(aes(color=treatment), size=5)+
+#   scale_color_manual(name="Treatment",labels=c("N5", "Carbon"), values=c("red","black"))+
+#   geom_line()+
+#   geom_vline(xintercept = 2005, linetype="longdash")+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   xlab("Year")+
+#   ylab("Community Change")+
+#   ggtitle("Restoration Plots")+
+#   ylim(min=0, max=0.8)
+# 
+# uk_annual<-
+#   ggplot(data=subset(mean_change, project_name=="ukulinga annual"), aes(x=as.numeric(calendar_year), y=mean_change, group=treatment))+
+#   geom_point(aes(color=treatment), size=5)+
+#   scale_color_manual(name="Treatment",labels=c("N10"), values=c("red"))+
+#   geom_line()+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   xlab("Year")+
+#   ylab("Community Change")+
+#   ggtitle("Ukulinga Annual Burn")+
+#   ylim(min=0, max=0.8)
+# 
+# uk_four<-
+#   ggplot(data=subset(mean_change, project_name=="ukulinga four"), aes(x=as.numeric(calendar_year), y=mean_change, group=treatment))+
+#   geom_point(aes(color=treatment), size=5)+
+#   scale_color_manual(name="Treatment",labels=c("N10"), values=c("red"))+
+#   geom_line()+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   xlab("Year")+
+#   ylab("Community Change")+
+#   ggtitle("Ukulinga 4-Yr Burn")+
+#   ylim(min=0, max=0.8)
+# 
+# uk_ub<-
+#   ggplot(data=subset(mean_change, project_name=="ukulinga unburned"), aes(x=as.numeric(calendar_year), y=mean_change, group=treatment))+
+#   geom_point(aes(color=treatment), size=5)+
+#   scale_color_manual(name="Treatment",labels=c("N10"), values=c("red"))+
+#   geom_line()+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   xlab("Year")+
+#   ylab("Community Change")+
+#   ggtitle("Ukulinga Unburned")+
+#   ylim(min=0, max=0.8)
 
-uk_annual<-
-  ggplot(data=subset(mean_change, project_name=="ukulinga annual"), aes(x=as.numeric(calendar_year), y=mean_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N10"), values=c("red"))+
-  geom_line()+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Community Change")+
-  ggtitle("Ukulinga Annual Burn")+
-  ylim(min=0, max=0.8)
-
-uk_four<-
-  ggplot(data=subset(mean_change, project_name=="ukulinga four"), aes(x=as.numeric(calendar_year), y=mean_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N10"), values=c("red"))+
-  geom_line()+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Community Change")+
-  ggtitle("Ukulinga 4-Yr Burn")+
-  ylim(min=0, max=0.8)
-
-uk_ub<-
-  ggplot(data=subset(mean_change, project_name=="ukulinga unburned"), aes(x=as.numeric(calendar_year), y=mean_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N10"), values=c("red"))+
-  geom_line()+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Community Change")+
-  ggtitle("Ukulinga Unburned")+
-  ylim(min=0, max=0.8)
-
-grid.arrange(pplots, BGP_ub, BGP_b, nutnet, invert, restoration, uk_annual, uk_four, uk_ub)
-
+grid.arrange(pplots, BGP_b, BGP_ub, nutnet, invert, ncol=3)
+#export at 1600x600
 
 #####
 ##### doing NMDS with all experiments
@@ -470,7 +520,8 @@ turnover_twoyears <- function(d1, d2,
 # generating appearances and disappearances for each experiment ---------------------------------------------
 #make a new dataframe with just the label
 spdata3 <- spdata2%>%
-  mutate(id2=paste(project_name, treatment, sep='::'))
+  mutate(id2=paste(project_name, treatment, sep='::'))%>%
+  filter(project_name!='ghost fire'&project_name!='restoration'&project_name!='ChANGE'&project_name!='ukulinga four')
 
 exp_code=spdata3%>%
   select(id2)%>%
@@ -516,9 +567,9 @@ for.analysis2 <- for.analysis%>%
 
 #generating figure of appearances/disappearances for each experiment
 pplots<-
-  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="pplots"&treatment!="N1P1"&treatment!="N1P2"&treatment!="N1P3"), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
+  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="pplots"&treatment!="N1P1"&treatment!="N1P2"&treatment!="N1P3"&treatment!="N2P1"&treatment!='N2P2'&treatment!='N2P3'), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
   geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",breaks=c("N1P0", "N2P0", "N2P1", "N2P2", "N2P3"), labels=c("N0 P0", "N10 P0","N10 P2.5","N10 P5","N10 P10"), values=c("blue", "red","purple","purple","purple"))+
+  scale_color_manual(name="Treatment",breaks=c("N1P0", "N2P0"), labels=c("control", "N10"), values=c("blue", "red"))+
   geom_line()+
   geom_vline(xintercept = 2004, linetype="longdash")+
   geom_vline(xintercept = 2006)+
@@ -528,9 +579,9 @@ pplots<-
   ggtitle("Phosphorus Plots")
 
 BGP_ub<-
-  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="BGP unburned"&treatment!="u_u_p"), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
+  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="BGP unburned"&treatment!="u_u_p"&treatment!='u_u_b'), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
   geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment", breaks=c("u_u_c", "u_u_n", "u_u_b"), labels=c("N0 P0", "N10 P0", "N10 P1"), values=c("blue","red","purple"))+
+  scale_color_manual(name="Treatment", breaks=c("u_u_c", "u_u_n"), labels=c("N0", "N10"), values=c("blue","red"))+
   geom_line()+
   geom_vline(xintercept = 1989)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
@@ -539,9 +590,9 @@ BGP_ub<-
   ggtitle("Belowground Plots Unburned")
 
 BGP_b<-
-  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="BGP burned"&treatment!="b_u_p"), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
+  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="BGP burned"&treatment!="b_u_p"&treatment!='b_u_b'), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
   geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",breaks=c("b_u_c", "b_u_n", "b_u_b"), labels=c("N0 P0", "N10 P0", "N10 P1"), values=c("blue","red","purple"))+
+  scale_color_manual(name="Treatment",breaks=c("b_u_c", "b_u_n"), labels=c("N0", "N10"), values=c("blue","red"))+
   geom_line()+
   geom_vline(xintercept = 1989,linetype="longdash")+
   geom_vline(xintercept = 1994)+
@@ -551,9 +602,9 @@ BGP_b<-
   ggtitle("Belowground Plots Burned")
 
 nutnet<-
-  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="nutnet"&treatment!="fence"&treatment!="NPKfence"&treatment!="P"&treatment!="K"&treatment!="PK"), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
+  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="nutnet"&treatment!="fence"&treatment!="NPKfence"&treatment!="P"&treatment!="K"&treatment!="PK"&treatment!="NP"&treatment!="PK"&treatment!="NK"&treatment!="NPK"), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
   geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",breaks=c("control", "N", "NP", "NK", "NPK"), labels=c("N0 P0 K0","N10 P0 K0" ,"N10 P10 K0","N10 P0 K10" ,"N10 P10 K10"), values=c("blue","red", "purple", "purple","purple"))+
+  scale_color_manual(name="Treatment",breaks=c("control", "N"), labels=c("N0 P0 K0","N10"), values=c("blue","red"))+
   geom_line()+
   geom_vline(xintercept = 2010,linetype="longdash")+
   geom_vline(xintercept = 2012)+
@@ -563,9 +614,9 @@ nutnet<-
   ggtitle("Nutrient Network")
 
 invert<-
-  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="invert"&treatment!="caged"&treatment!="caged_insecticide"&treatment!="NPK_caged_insecticide"&treatment!="NPK_caged"&treatment!="insecticide"), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
+  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="invert"&treatment!="caged"&treatment!="caged_insecticide"&treatment!="NPK_caged_insecticide"&treatment!="NPK_caged"&treatment!="insecticide"&treatment!="NPK_insecticide"), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
   geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",breaks=c("control", "NPK", "NPK_insecticide"), labels=c("N0 P0 K0", "N10 P10 K10", "N10 P10 K10\n& Insecticide"), values=c("blue","purple","purple"))+
+  scale_color_manual(name="Treatment",breaks=c("control", "NPK"), labels=c("N0", "N10"), values=c("blue", "red"))+
   geom_line()+
   geom_vline(xintercept = 2011,linetype="longdash")+
   geom_vline(xintercept = 2013)+
@@ -573,17 +624,6 @@ invert<-
   xlab("Year")+
   ylab("Species Change")+
   ggtitle("Invertebrate Removal")
-
-restoration<-
-  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="restoration"&treatment!='C'), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",breaks=c('control', 'N'), labels=c("N0", "N5"), values=c("blue","red"))+
-  geom_line()+
-  geom_vline(xintercept = 2005, linetype="longdash")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Species Change")+
-  ggtitle("Restoration Plots")
 
 uk_annual<-
   ggplot(data=subset(for.analysis2, variable!='total'&project_name=="ukulinga annual"), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
@@ -595,16 +635,6 @@ uk_annual<-
   ylab("Mean Change")+
   ggtitle("Ukulinga Annual Burn")
 
-uk_four<-
-  ggplot(data=subset(for.analysis2, variable!='total'&project_name=="ukulinga four"), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment", breaks=c("control", "N"), labels=c("N0", "N10"), values=c("blue", "red"))+
-  geom_line()+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Mean Change")+
-  ggtitle("Ukulinga 4-Yr Burn")
-
 uk_ub<-
   ggplot(data=subset(for.analysis2, variable!='total'&project_name=="ukulinga unburned"), aes(x=as.numeric(calendar_year), y=num_spp2, group=interaction(treatment,variable)))+
   geom_point(aes(color=treatment), size=5)+
@@ -615,7 +645,7 @@ uk_ub<-
   ylab("Mean Change")+
   ggtitle("Ukulinga Unburned")
 
-grid.arrange(pplots, BGP_ub, BGP_b, nutnet, invert, restoration, uk_annual, uk_four, uk_ub)
+grid.arrange(pplots, BGP_b, BGP_ub, nutnet, uk_annual, uk_ub, invert, ncol=3)
 #export at 2400x1600
 
 
@@ -631,12 +661,10 @@ meanChangeTime <- mean_change%>%
   merge(experimentYear, by=c('project_name', 'calendar_year'))
 
 meanChangeTimeSubset <- meanChangeTime%>%
-  filter(treatment=='b_u_n'|treatment=='b_u_b'|treatment=='u_u_n'|treatment=='u_u_b'|treatment=='N2P0'|treatment=='N2P1'|treatment=='N2P2'|treatment=='N2P3'|treatment=='N'|treatment=='NP'|treatment=='NK'|treatment=='NPK')%>%
-  filter(project_name!='ukulinga annual'&project_name!='ukulinga four'&project_name!='ukulinga unburned'&project_name!='restoration')
-
-meanChangeTimeSubset_nochange <- meanChangeTime%>%
-  filter(project_name=='ukulinga annual'|project_name=='ukulinga four'|project_name=='ukulinga unburned'|project_name=='restoration')%>%
-  filter(treatment!='C')
+  filter(treatment=='b_u_n'|treatment=='u_u_n'|treatment=='N2P0'|treatment=='N'|treatment=='NPK')%>%
+  filter(project_name!='ukulinga four'&project_name!='restoration')%>%
+  mutate(remove=ifelse(treatment=='NPK'&project_name=='nutnet', 1, 0))%>%
+  filter(remove!=1)
 
 
 theme_set(theme_bw())
@@ -647,37 +675,135 @@ theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=elemen
              legend.title=element_text(size=20), legend.text=element_text(size=20))
 
 
-changePlot <- ggplot(data=subset(meanChangeTimeSubset,experiment_year>0), aes(x=experiment_year, y=mean_change, color=project_name)) +
+ggplot(data=subset(meanChangeTimeSubset,experiment_year>0), aes(x=experiment_year, y=mean_change, color=project_name)) +
   geom_point(size=5) +
   geom_line(aes(group=interaction(project_name,treatment))) +
+  scale_color_manual(name="Experiment",labels=c("BGP burned", "BGP unburned", "Invert Removals", "NutNet", "PPlots", "Ukulinga burned", "Ukulinga unburned"), values=c("black", "green", "red", "orange", "blue", "dark grey", "purple")) +
   xlab('Experiment Year') +
   ylab('Community Change') +
-  scale_color_discrete(name='Experiment') +
   ylim(0,0.8) +
-  xlim(0,30)
+  xlim(0,30) +
+  geom_vline(xintercept = 6)
+#export at 1400x700
 
-nochangePlot <- ggplot(data=meanChangeTimeSubset_nochange, aes(x=experiment_year, y=mean_change, color=project_name)) +
+#burn regime
+ggplot(data=subset(meanChangeTimeSubset,experiment_year>0), aes(x=experiment_year, y=mean_change, color=project_name)) +
   geom_point(size=5) +
   geom_line(aes(group=interaction(project_name,treatment))) +
+  scale_color_manual(name="Experiment",labels=c("BGP burned", "BGP unburned", "Invert Removals", "NutNet", "PPlots", "Ukulinga burned", "Ukulinga unburned"), values=c("red", "brown", "orange", "orange", "orange", "red", "brown")) +
   xlab('Experiment Year') +
   ylab('Community Change') +
-  scale_color_discrete(name='Experiment') +
   ylim(0,0.8) +
-  xlim(0,30)
-
-pushViewport(viewport(layout=grid.layout(2,1)))
-print(changePlot, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-print(nochangePlot, vp=viewport(layout.pos.row=2, layout.pos.col=1))
+  xlim(0,30) +
+  geom_vline(xintercept = 6)
+#export at 1400x700
 
 
 
 
+###change in abundance
+abund <- spdata4%>%
+  left_join(experimentYear)%>%
+  select(-X, -calendar_year, -id)%>%
+  mutate(experiment_year_num=paste("yr", experiment_year, sep=''))%>%
+  select(-experiment_year)%>%
+  group_by(genus_species, plot_id, treatment, project_name, species, experiment_year_num)%>%
+  summarise(abundance=mean(abundance))%>%
+  ungroup()%>%
+  group_by(genus_species, plot_id, treatment, project_name, species)%>%
+  spread(key=experiment_year_num, value=abundance, fill=0)%>%
+  ungroup()%>%
+  mutate(change_yr3=yr3-yr1, change_yr5=yr5-yr1, change_yr7=yr7-yr1, change_yr10=yr10-yr1)
+
+yr3 <- ggplot(data=abund, aes(x=yr1,y=change_yr3)) +
+  geom_point() +
+  xlab('Initial Abundance') +
+  ylab('Abundance Change')
+
+yr5 <- ggplot(data=abund, aes(x=yr1, y=change_yr5)) +
+  geom_point() +
+  xlab('Initial Abundance') +
+  ylab('Abundance Change')
+
+yr7 <- ggplot(data=abund, aes(x=yr1, y=change_yr7)) +
+  geom_point() +
+  xlab('Initial Abundance') +
+  ylab('Abundance Change')
+
+yr10 <- ggplot(data=abund, aes(x=yr1, y=change_yr10)) +
+  geom_point() +
+  xlab('Initial Abundance') +
+  ylab('Abundance Change')
+
+grid.arrange(yr3, yr5, yr10, ncol=3)
+#print at 1000x500
 
 
 
+#loss of dominant spp
+dom <- spdata4%>%
+  left_join(experimentYear)%>%
+  select(-X, -calendar_year, -id)%>%
+  filter(species=='andropogon gerardii'|species=='sorghastrum nutans'|species=='schizachyrium scoparium')%>%
+  group_by(genus_species, plot_id, treatment, project_name, species, experiment_year)%>%
+  summarise(abundance=mean(abundance))%>%
+  ungroup()%>%
+  filter(treatment=='N'|treatment=='N2P0'|treatment=='NPK'|treatment=='b_u_n'|treatment=='u_u_n')%>%
+  mutate(remove=ifelse(project_name=='nutnet'&treatment=='NPK', 1, 0))%>%
+  filter(remove==0)
 
+andro <- ggplot(barGraphStats(data=subset(dom, species=='andropogon gerardii'&project_name!='restoration'&project_name!='ukulinga four'), variable="abundance", byFactorNames=c("experiment_year", "project_name")), aes(x=experiment_year, y=mean, group=project_name, color=project_name)) +
+  geom_point(size=5) +
+  geom_line() +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se)) +
+  theme(legend.position = 'none') +
+  scale_color_manual(name="Experiment",labels=c("BGP burned", "BGP unburned", "Invert Removals", "NutNet", "PPlots", "Ukulinga burned", "Ukulinga unburned"), values=c("black", "green", "red", "orange", "blue", "dark grey", "purple")) +
+  xlab('Experiment Year') +
+  ylab('Relative Abundance')
 
+sorg <- ggplot(barGraphStats(data=subset(dom, species=='sorghastrum nutans'&project_name!='restoration'&project_name!='ukulinga four'), variable="abundance", byFactorNames=c("experiment_year", "project_name")), aes(x=experiment_year, y=mean, group=project_name, color=project_name)) +
+  geom_point(size=5) +
+  geom_line() +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se)) +
+  theme(legend.position = 'none') +
+  scale_color_manual(name="Experiment",labels=c("BGP burned", "BGP unburned", "Invert Removals", "NutNet", "PPlots", "Ukulinga burned", "Ukulinga unburned"), values=c("black", "green", "red", "orange", "blue", "dark grey", "purple")) +
+  xlab('Experiment Year') +
+  ylab('Relative Abundance')
 
+schiz <- ggplot(barGraphStats(data=subset(dom, species=='schizachyrium scoparium'&project_name!='restoration'&project_name!='ukulinga four'), variable="abundance", byFactorNames=c("experiment_year", "project_name")), aes(x=experiment_year, y=mean, group=project_name, color=project_name)) +
+  geom_point(size=5) +
+  geom_line() +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se)) +
+  theme(legend.position = 'none') +
+  scale_color_manual(name="Experiment",labels=c("BGP burned", "BGP unburned", "Invert Removals", "NutNet", "PPlots", "Ukulinga burned", "Ukulinga unburned"), values=c("black", "green", "red", "orange", "blue", "dark grey", "purple")) +
+  xlab('Experiment Year') +
+  ylab('Relative Abundance')
 
+grid.arrange(andro, sorg, schiz, ncol=3)
+#export at 1000x500
 
+#mean dom spp loss across all experiments
+andro <- ggplot(barGraphStats(data=subset(dom, species=='andropogon gerardii'&project_name!='restoration'&project_name!='ukulinga four'), variable="abundance", byFactorNames=c("experiment_year")), aes(x=experiment_year, y=mean)) +
+  geom_point(size=5) +
+  geom_line() +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se)) +
+  xlab('Experiment Year') +
+  ylab('Relative Abundance')
 
+sorg <- ggplot(barGraphStats(data=subset(dom, species=='sorghastrum nutans'&project_name!='restoration'&project_name!='ukulinga four'), variable="abundance", byFactorNames=c("experiment_year", "project_name")), aes(x=experiment_year, y=mean, group=project_name, color=project_name)) +
+  geom_point(size=5) +
+  geom_line() +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se)) +
+  theme(legend.position = 'none') +
+  scale_color_manual(name="Experiment",labels=c("BGP burned", "BGP unburned", "Invert Removals", "NutNet", "PPlots", "Ukulinga burned", "Ukulinga unburned"), values=c("black", "green", "red", "orange", "blue", "dark grey", "purple")) +
+  xlab('Experiment Year') +
+  ylab('Relative Abundance')
+
+schiz <- ggplot(barGraphStats(data=subset(dom, species=='schizachyrium scoparium'&project_name!='restoration'&project_name!='ukulinga four'), variable="abundance", byFactorNames=c("experiment_year")), aes(x=experiment_year, y=mean)) +
+  geom_point(size=5) +
+  geom_line() +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se)) +
+  xlab('Experiment Year') +
+  ylab('Relative Abundance')
+
+grid.arrange(andro, sorg, schiz, ncol=3)
