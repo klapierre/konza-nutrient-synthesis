@@ -713,34 +713,45 @@ abund <- spdata4%>%
   group_by(genus_species, plot_id, treatment, project_name, species)%>%
   spread(key=experiment_year_num, value=abundance, fill=0)%>%
   ungroup()%>%
-  mutate(change_yr3=yr3-yr1, change_yr5=yr5-yr1, change_yr7=yr7-yr1, change_yr10=yr10-yr1)
+  mutate(change_yr2=yr2-yr1, change_yr3=yr3-yr1, change_yr4=yr4-yr1, change_yr5=yr5-yr1, change_yr6=yr6-yr1, change_yr7=yr7-yr1, change_yr8=yr8-yr1, change_yr9=yr9-yr1, change_yr10=yr10-yr1, change_yr11=yr11-yr1, change_yr12=yr12-yr1, change_yr13=yr13-yr1, change_yr14=yr14-yr1, change_yr15=yr15-yr1, change_yr20=yr20-yr1, change_yr25=yr25-yr1, change_yr30=yr30-yr1)
 
-yr3 <- ggplot(data=abund, aes(x=yr1,y=change_yr3)) +
-  geom_point() +
-  xlab('Initial Abundance') +
-  ylab('Abundance Change')
-
-yr5 <- ggplot(data=abund, aes(x=yr1, y=change_yr5)) +
-  geom_point() +
-  xlab('Initial Abundance') +
-  ylab('Abundance Change')
-
-yr7 <- ggplot(data=abund, aes(x=yr1, y=change_yr7)) +
-  geom_point() +
-  xlab('Initial Abundance') +
-  ylab('Abundance Change')
-
-yr10 <- ggplot(data=abund, aes(x=yr1, y=change_yr10)) +
-  geom_point() +
-  xlab('Initial Abundance') +
-  ylab('Abundance Change')
-
-grid.arrange(yr3, yr5, yr10, ncol=3)
-#print at 1000x500
+# yr3 <- ggplot(data=abund, aes(x=yr1,y=change_yr3)) +
+#   geom_point() +
+#   xlab('Initial Abundance') +
+#   ylab('Abundance Change')
+# 
+# yr5 <- ggplot(data=abund, aes(x=yr1, y=change_yr5)) +
+#   geom_point() +
+#   xlab('Initial Abundance') +
+#   ylab('Abundance Change')
+# 
+# yr7 <- ggplot(data=abund, aes(x=yr1, y=change_yr7)) +
+#   geom_point() +
+#   xlab('Initial Abundance') +
+#   ylab('Abundance Change')
+# 
+# yr10 <- ggplot(data=abund, aes(x=yr1, y=change_yr10)) +
+#   geom_point() +
+#   xlab('Initial Abundance') +
+#   ylab('Abundance Change')
+# 
+# grid.arrange(yr3, yr5, yr10, ncol=3)
+# #print at 1000x500
 
 
 
 #loss of dominant spp
+domCtl <- spdata4%>%
+  left_join(experimentYear)%>%
+  select(-X, -calendar_year, -id)%>%
+  filter(species=='andropogon gerardii'|species=='sorghastrum nutans'|species=='schizachyrium scoparium')%>%
+  group_by(genus_species, treatment, project_name, species, experiment_year)%>%
+  summarise(abundance=mean(abundance))%>%
+  ungroup()%>%
+  filter(treatment=='control'|treatment=='N1P0'|treatment=='b_u_c'|treatment=='u_u_c')%>%
+  select(-treatment)
+names(domCtl)[names(domCtl)=="abundance"] <- "abundance_ctl"
+
 dom <- spdata4%>%
   left_join(experimentYear)%>%
   select(-X, -calendar_year, -id)%>%
@@ -750,16 +761,18 @@ dom <- spdata4%>%
   ungroup()%>%
   filter(treatment=='N'|treatment=='N2P0'|treatment=='NPK'|treatment=='b_u_n'|treatment=='u_u_n')%>%
   mutate(remove=ifelse(project_name=='nutnet'&treatment=='NPK', 1, 0))%>%
-  filter(remove==0)
+  filter(remove==0&experiment_year!=1)%>%
+  merge(domCtl, by=c('genus_species', 'project_name', 'species', 'experiment_year'))%>%
+  mutate(abund_change=log(abundance/abundance_ctl))
 
-andro <- ggplot(barGraphStats(data=subset(dom, species=='andropogon gerardii'&project_name!='restoration'&project_name!='ukulinga four'), variable="abundance", byFactorNames=c("experiment_year", "project_name")), aes(x=experiment_year, y=mean, group=project_name, color=project_name)) +
+andro <- ggplot(barGraphStats(data=subset(dom, species=='andropogon gerardii'&project_name!='restoration'&project_name!='ukulinga four'), variable="abund_change", byFactorNames=c("experiment_year", "project_name")), aes(x=experiment_year, y=mean, group=project_name, color=project_name)) +
   geom_point(size=5) +
   geom_line() +
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se)) +
   theme(legend.position = 'none') +
   scale_color_manual(name="Experiment",labels=c("BGP burned", "BGP unburned", "Invert Removals", "NutNet", "PPlots", "Ukulinga burned", "Ukulinga unburned"), values=c("black", "green", "red", "orange", "blue", "dark grey", "purple")) +
   xlab('Experiment Year') +
-  ylab('Relative Abundance')
+  ylab('Change in Relative Abundance')
 
 sorg <- ggplot(barGraphStats(data=subset(dom, species=='sorghastrum nutans'&project_name!='restoration'&project_name!='ukulinga four'), variable="abundance", byFactorNames=c("experiment_year", "project_name")), aes(x=experiment_year, y=mean, group=project_name, color=project_name)) +
   geom_point(size=5) +
@@ -783,27 +796,36 @@ grid.arrange(andro, sorg, schiz, ncol=3)
 #export at 1000x500
 
 #mean dom spp loss across all experiments
-andro <- ggplot(barGraphStats(data=subset(dom, species=='andropogon gerardii'&project_name!='restoration'&project_name!='ukulinga four'), variable="abundance", byFactorNames=c("experiment_year")), aes(x=experiment_year, y=mean)) +
+andro <- ggplot(barGraphStats(data=subset(dom, species=='andropogon gerardii'&project_name!='restoration'&project_name!='ukulinga four'), variable="abund_change", byFactorNames=c("experiment_year")), aes(x=experiment_year, y=mean)) +
   geom_point(size=5) +
   geom_line() +
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se)) +
   xlab('Experiment Year') +
-  ylab('Relative Abundance')
+  ylab('ln Change in Relative Abundance') +
+  xlim(1,10) +
+  ylim(-3,1) +
+  geom_hline(yintercept=0) +
+  geom_text()
 
-sorg <- ggplot(barGraphStats(data=subset(dom, species=='sorghastrum nutans'&project_name!='restoration'&project_name!='ukulinga four'), variable="abundance", byFactorNames=c("experiment_year", "project_name")), aes(x=experiment_year, y=mean, group=project_name, color=project_name)) +
+sorg <- ggplot(barGraphStats(data=subset(dom, species=='sorghastrum nutans'&project_name!='restoration'&project_name!='ukulinga four'), variable="abund_change", byFactorNames=c("experiment_year")), aes(x=experiment_year, y=mean)) +
   geom_point(size=5) +
   geom_line() +
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se)) +
-  theme(legend.position = 'none') +
-  scale_color_manual(name="Experiment",labels=c("BGP burned", "BGP unburned", "Invert Removals", "NutNet", "PPlots", "Ukulinga burned", "Ukulinga unburned"), values=c("black", "green", "red", "orange", "blue", "dark grey", "purple")) +
   xlab('Experiment Year') +
-  ylab('Relative Abundance')
+  ylab('ln Change in Relative Abundance') +
+  xlim(1,10) +
+  ylim(-3,1) +
+  geom_hline(yintercept=0)
 
-schiz <- ggplot(barGraphStats(data=subset(dom, species=='schizachyrium scoparium'&project_name!='restoration'&project_name!='ukulinga four'), variable="abundance", byFactorNames=c("experiment_year")), aes(x=experiment_year, y=mean)) +
+schiz <- ggplot(barGraphStats(data=subset(dom, species=='schizachyrium scoparium'&project_name!='restoration'&project_name!='ukulinga four'), variable="abund_change", byFactorNames=c("experiment_year")), aes(x=experiment_year, y=mean)) +
   geom_point(size=5) +
   geom_line() +
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se)) +
   xlab('Experiment Year') +
-  ylab('Relative Abundance')
+  ylab('ln Change in Relative Abundance') +
+  xlim(1,10) +
+  ylim(-3,1) +
+  geom_hline(yintercept=0)
 
 grid.arrange(andro, sorg, schiz, ncol=3)
+#export at 1000x500
