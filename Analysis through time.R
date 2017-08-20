@@ -829,3 +829,14 @@ schiz <- ggplot(barGraphStats(data=subset(dom, species=='schizachyrium scoparium
 
 grid.arrange(andro, sorg, schiz, ncol=3)
 #export at 1000x500
+
+
+
+###precip data
+climate <- read.csv('Konza_Daily_Met_data_summary.csv')
+
+hist(climate$Total_precip_mean, breaks=10)
+hist(climate$Temp_mean, breaks=10)
+hist(climate$Total_dry_days, breaks=10)
+
+
