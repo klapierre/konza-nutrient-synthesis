@@ -1,6 +1,4 @@
-library(tidyr)
-library(dplyr)
-library(ggplot2)
+library(tidyverse)
 library(vegan)
 library(gridExtra)
 library(doBy)
@@ -10,56 +8,45 @@ library(codyn)
 #meghan's:
 setwd("~/Dropbox/Konza Nutrient Synthesis")
 
-#kim's:
+#kim's laptop:
 setwd('C:\\Users\\Kim\\Dropbox\\konza projects\\Konza Nutrient Synthesis')
 
-#' @x the vector of abundances of each species
-S<-function(x){
-  x1<-x[x!=0]
-  length(x1)
-}
+#kim's desktop:
+setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\Threshold project\\data')
 
-##first get a list of controls
-controls<-read.csv("Konza_nutrient synthesis_spp comp.csv")%>%
-  mutate(control=ifelse(treatment=="N1P0", 1, ifelse(treatment=="b_u_c", 1, ifelse(treatment==0, 1, ifelse(treatment=="control", 1, ifelse(treatment=="control_control", 1, ifelse(treatment=="u_u_c", 1, 0)))))))%>%
-  select(project_name, treatment, control)%>%
+
+
+###data
+#community data
+community<-read.csv("Konza_nutrient synthesis_spp comp.csv")%>%
+  #create a replicate variable unique to each experiment
+  mutate(replicate=paste(project_name, treatment, plot_id, sep='::'))%>%
+  #filter out 0s
+  filter(abundance>0)
+  # #drop ChANGE, ghost fire, and Ukulinga data because time series too short
+  # #drop restoration plots because planted communities
+  # filter(!(project_name %in% c('ukulinga annual', 'ukulinga four', 'ukulinga unburned', 'restoration', 'ChANGE', 'ghost fire')))
+
+#list of experiments, treatments, and plots
+plots <- community%>%
+  select(project_name, treatment, plot_id, replicate, calendar_year)%>%
   unique()
+  
 
-##select N10 treatments
-nitrogen<-read.csv("Konza_nutrient synthesis_spp comp.csv")%>%
-  mutate(nitrogen=ifelse(treatment=="N2P0", 1, ifelse(treatment=="N2P3",1, ifelse(treatment=="b_u_n", 1, ifelse(treatment=="b_u_b",1, ifelse(treatment==10, 1, ifelse(treatment==5, 1, ifelse(treatment=="NPK", 1, ifelse(treatment=="N",1, ifelse(treatment=="control_nitrogen", 1, ifelse(treatment=="NP", 1,0)))))))))))%>%
-  select(project_name, treatment, nitrogen)%>%
-  unique()
-
-#read in climate data
+#climate data
 precip<-read.csv("WETDRY.csv")%>%
   mutate(calendar_year=YEAR, gprecip=AprSeptPrecip)%>%
   select(calendar_year, gprecip)
 
-##do species data
-spdata<-read.csv("Konza_nutrient synthesis_spp comp.csv")%>%
-  mutate(id=paste(project_name, calendar_year, sep="::"))
 
-##richness
-sp_rich <- group_by(spdata, project_name, treatment, calendar_year, plot_id) %>% 
-  summarize(S=S(abundance))%>%
-  tbl_df()%>%
-  group_by(project_name, treatment, calendar_year)%>%
-  summarize(S=mean(S))
+###calculate difference metrics
 
-sp_rich_control<-merge(sp_rich, controls, by=c("treatment","project_name"))%>%
-  filter(control==1)%>%
-  mutate(c_S=S)%>%
-  select(-S, -control,-treatment)
 
-sp_rich_rel1<-merge(sp_rich, sp_rich_control, by=c("project_name","calendar_year"))%>%
-  mutate(PC_S=(S-c_S)/c_S)
+###calculate change metrics
+#RAC change
+RACchange <- RAC_change(community, time.var='calendar_year', species.var='genus_species', abundance.var='abundance', replicate.var='replicate')
 
-sp_rich_rel<-merge(sp_rich_rel1, controls, by=c("treatment","project_name"))%>%
-  filter(control!=1)
 
-nit_sp<-merge(sp_rich_rel, nitrogen, by=c("project_name","treatment"))%>%
-  filter(nitrogen==1)
 
 #richness graph
 ggplot(data=nit_sp, aes(x=calendar_year, y=PC_S, group=treatment))+
@@ -325,7 +312,7 @@ grid.arrange(pplots, BGP_ub, BGP_b, nutnet, invert, restoration, uk_annual, uk_f
 
 
 #####
-##### doing NMDS with all experiments
+##### doing NMDS with all experiments (only keep N only treatments)
 #####
 
 sp_names<-spdata2%>%
@@ -356,13 +343,15 @@ lst_yr<-spdata4%>%
   mutate(lastyear=max(calendar_year))%>%
   filter(calendar_year==lastyear)%>%
   select(project_name, treatment, plot_id, abundance, species)%>%
-  filter(project_name!="ChANGE"&project_name!="ghost fire")%>%
-  filter(treatment!="caged"&treatment!="caged_insecticide"&treatment!="fence"&treatment!="NPK_caged"&treatment!="NPK_caged_insecticide"&treatment!="NPKfence")
+  filter(project_name!="ChANGE"&project_name!="ghost fire"&project_name!='restoration')%>%
+  filter(treatment!="caged"&treatment!="caged_insecticide"&treatment!="fence"&treatment!="NPK_caged"&treatment!="NPK_caged_insecticide"&treatment!="NPKfence"&treatment!='u_u_b'&treatment!='u_u_p'&treatment!='b_u_b'&treatment!='b_u_p'&treatment!='insecticide'&treatment!='K'&treatment!='N1P1'&treatment!='N1P2'&treatment!='N1P3'&treatment!='N2P1'&treatment!='N2P2'&treatment!='N2P3'&treatment!='NK'&treatment!='NP'&treatment!='NPK_insecticide'&treatment!='P'&treatment!='PK')%>%
+  mutate(treatment2=ifelse(treatment=='b_u_n', 'N', ifelse(treatment=='u_u_n', 'N', ifelse(treatment=='NPK', 'N', ifelse(treatment=='N', 'N', ifelse(treatment=='N2P0', 'N', 'control'))))))%>%
+  select(-treatment)
 
 sp_wide<-lst_yr%>%
   spread(species, abundance, fill=0)
 
-mds<-metaMDS(sp_wide[,4:131],autotransform=FALSE, shrink=FALSE, trymax = 1000)
+mds<-metaMDS(sp_wide[,4:110],autotransform=FALSE, shrink=FALSE, trymax = 1000)
 mds
 
 ###plotting this
@@ -373,14 +362,14 @@ scores <- data.frame(scores(mds, display="sites"))  # Extracts NMDS scores for y
 scores2<- cbind(plots, scores)
 
 funcs<-function(x)c(mn=mean(x),se=sd(x)/sqrt(length(x)))
-means<-summaryBy(NMDS1+NMDS2~treatment+project_name, data=scores2, FUN=funcs)
+means<-summaryBy(NMDS1+NMDS2~treatment2+project_name, data=scores2, FUN=funcs)
 
-ggplot(means, aes(x=NMDS1.mn, y=NMDS2.mn, color=treatment))+
-  geom_point(size=8,aes(shape=project_name))+
+ggplot(means, aes(x=NMDS1.mn, y=NMDS2.mn, color=project_name))+
+  geom_point(size=8,aes(shape=treatment2))+
   geom_errorbar(aes(ymin=NMDS2.mn-NMDS2.se, ymax=NMDS2.mn+NMDS2.se),color="black")+
   geom_errorbarh(aes(xmin=NMDS1.mn-NMDS1.se, xmax=NMDS1.mn+NMDS1.se),color="black")+
-  scale_shape_manual(name="Experiment", values=c(15,16,4,17,18,11,9,10,13))+
-  scale_color_manual(name="Treatment", values=c("purple","green","red","blue","purple","green","red","blue", "black","green","black","black","red","green","blue","blue","blue","red","purple","purple","purple","red","purple","purple","purple","purple","blue","blue"))+
+  scale_shape_manual(name="Treatment", values=c(16,17))+
+  scale_color_manual(name="Experiment", values=c("purple","green","red","blue","orange","black","dark green","pink"))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   xlab("NMDS1")+
   ylab("NMDS2")
@@ -672,6 +661,36 @@ print(nochangePlot, vp=viewport(layout.pos.row=2, layout.pos.col=1))
 
 
 
+
+###BGP unburned only NMDS spread
+bgpUnburned<-spdata4%>%
+  filter(project_name=='BGP unburned')%>%
+  select(project_name, treatment, calendar_year, plot_id, abundance, species)%>%
+  filter(treatment!="caged"&treatment!="caged_insecticide"&treatment!="fence"&treatment!="NPK_caged"&treatment!="NPK_caged_insecticide"&treatment!="NPKfence"&treatment!='u_u_b'&treatment!='u_u_p'&treatment!='b_u_b'&treatment!='b_u_p'&treatment!='insecticide'&treatment!='K'&treatment!='N1P1'&treatment!='N1P2'&treatment!='N1P3'&treatment!='N2P1'&treatment!='N2P2'&treatment!='N2P3'&treatment!='NK'&treatment!='NP'&treatment!='NPK_insecticide'&treatment!='P'&treatment!='PK')%>%
+  mutate(treatment2=ifelse(treatment=='b_u_n', 'N', ifelse(treatment=='u_u_n', 'N', ifelse(treatment=='NPK', 'N', ifelse(treatment=='N', 'N', ifelse(treatment=='N2P0', 'N', 'control'))))))%>%
+  select(-treatment)
+
+bgpwide1<-bgpUnburned%>%
+  spread(species, abundance, fill=0)
+
+mds1<-metaMDS(bgpwide1[,5:115],autotransform=FALSE, shrink=FALSE, trymax = 1000)
+mds1
+
+###plotting this
+theme_set(theme_bw(12))
+
+plots<-as.data.frame(bgpwide1[,1:4])
+scores1 <- data.frame(scores(mds1, display="sites"))  # Extracts NMDS scores for year "i" #
+scores2a<- cbind(plots, scores1)
+
+
+ggplot(scores2a, aes(x=NMDS1, y=NMDS2, color=as.factor(calendar_year)))+
+  geom_point(size=8,aes(shape=treatment2))+
+  scale_shape_manual(name="Treatment", values=c(16,17))+
+  scale_color_manual(name="Year", values=c("purple","green","red","blue","orange","black"))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  xlab("NMDS1")+
+  ylab("NMDS2")
 
 
 
