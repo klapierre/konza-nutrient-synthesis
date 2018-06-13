@@ -32,7 +32,6 @@ plots <- community%>%
   select(project_name, treatment, plot_id, replicate, calendar_year)%>%
   unique()
   
-
 #climate data
 precip<-read.csv("WETDRY.csv")%>%
   mutate(calendar_year=YEAR, gprecip=AprSeptPrecip)%>%
@@ -44,7 +43,8 @@ precip<-read.csv("WETDRY.csv")%>%
 
 ###calculate change metrics
 #RAC change
-RACchange <- RAC_change(community, time.var='calendar_year', species.var='genus_species', abundance.var='abundance', replicate.var='replicate')
+RACchange <- RAC_change(community, time.var='calendar_year', species.var='genus_species', abundance.var='abundance', replicate.var='replicate')%>%
+  left_join(plots)
 
 
 
