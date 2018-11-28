@@ -24,7 +24,8 @@ change_trt <- read.csv("ChANGE_treatments.csv")%>%
   select(plot_id, treatment)
 
 nutnet_trt <- read.csv('KNZ_NutNet_trt.csv')%>%
-  mutate(site='nutnet')
+  mutate(site='nutnet')%>%
+  select(site, plot, treat_other_name)
 
 
 ###species data
@@ -72,7 +73,7 @@ sp_nutnet <- read.csv('nutnet_sppcomp_2007-2017.csv')%>%
   left_join(nutnet_trt)%>%
   mutate(project_name='nutnet', calendar_year=year, plot_id=plot, treatment=treat_other_name, genus_species=taxa, abundance=cover)%>%
   select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)%>%
-  filter(genus_species!='bare ground')
+  filter(genus_species!='bare ground', treatment!='fence'&treatment!='NPK_fence')
 
 # sp_ghostfire_clean<-read.csv("ghost fire_spp comp_2014-2015.csv")%>%
 #   mutate(genus_species=Species,
