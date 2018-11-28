@@ -181,7 +181,7 @@ sp_all <- sp_pplots%>%
   # rbind(sp_restoration)%>%
   # rbind(sp_ukulinga)
 
-#write.csv(sp_all, 'Konza_nutrient synthesis_spp comp.csv')
+# write.csv(sp_all, 'Konza_nutrient synthesis_spp comp.csv', row.names=F)
 
 # #anpp data
 # anpp_all <- anpp_pplots%>%
