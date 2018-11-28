@@ -9,10 +9,10 @@ library(codyn)
 setwd("~/Dropbox/Konza Nutrient Synthesis")
 
 #kim's laptop:
-setwd('C:\\Users\\Kim\\Dropbox\\konza projects\\Konza Nutrient Synthesis')
+setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\Threshold project\\data')
 
 #kim's desktop:
-setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\Threshold project\\data')
+setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\Threshold project\\data\\2018 analysis')
 
 
 
@@ -34,11 +34,11 @@ plots <- community%>%
   
 #climate data
 precip<-read.csv("WETDRY.csv")%>%
-  mutate(calendar_year=YEAR, gprecip=AprSeptPrecip)%>%
+  mutate(calendar_year=YEAR, gprecip=AprSeptPrecip)%>% #calculates growing season precip
   select(calendar_year, gprecip)
 
 
-###calculate difference metrics
+###calculate difference metrics?
 
 
 ###calculate change metrics
@@ -49,7 +49,7 @@ RACchange <- RAC_change(community, time.var='calendar_year', species.var='genus_
 
 
 #richness graph
-ggplot(data=nit_sp, aes(x=calendar_year, y=PC_S, group=treatment))+
+ggplot(data=RACchange, aes(x=calendar_year, y=richness_change, group=treatment))+
   geom_point(aes(color=treatment))+
   geom_line()+
   geom_hline(yintercept = 0)+
