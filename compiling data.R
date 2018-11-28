@@ -8,6 +8,8 @@ setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient S
 
 #konza spp list
 spp <- read.csv('konza_spplist.csv')
+nutnetSp <- read.csv('nutnet_spplist.csv')%>%
+  mutate(sppnum=SppNum)
 
 
 #treatments
@@ -60,17 +62,20 @@ sp_change <- read.csv("ChANGE_sppcomp_2013-2017.csv")%>%
 sp_invert <- read.csv('VI_sppcomp_2008-2017.csv')%>%
   mutate(project_name='invert', calendar_year=year, plot_id=plot, treatment=paste(NPK, exclose, insecticide, sep='_'), abundance=rel_cover, spnum=sppnum)%>%
   left_join(spp)%>%
-  mutate(genus_species=paste(genus, spp))%>%
+  mutate(genus_species2=paste(genus, spp))%>%
+  mutate(genus_species=ifelse(spnum==795, 'stellaria media', genus_species2))%>%
   select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)%>%
   filter(genus_species!='bare ground')
 
 sp_nutnet <- read.csv('nutnet_sppcomp_2007-2017.csv')%>%
-  select(-date)%>%
+  select(-date, -note_cover)%>%
   spread(key=season, value=cover, fill=0)%>%
   group_by(year, plot, taxa)%>%
-  mutate(cover=max(fall,spring))%>%
+  mutate(cover=pmax(fall,spring))%>%
   ungroup()%>%
   left_join(nutnet_trt)%>%
+  select(-taxa)%>%
+  left_join(nutnetSp)%>%
   mutate(project_name='nutnet', calendar_year=year, plot_id=plot, treatment=treat_other_name, genus_species=taxa, abundance=cover)%>%
   select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)%>%
   filter(genus_species!='bare ground', treatment!='fence'&treatment!='NPK_fence')
@@ -97,9 +102,7 @@ sp_nutnet <- read.csv('nutnet_sppcomp_2007-2017.csv')%>%
 #   ungroup()%>%
 #   mutate(project_name='restoration', calendar_year=YEAR, plot_id=PLOT, treatment=TRTCOMB)%>%
 #   select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)
-
-knz_spplist <- read.csv('konza_spplist.csv')
-
+# 
 # sp_ukulinga_all <- read.csv('KNZ UK_spp comp_2005-2010.csv')%>%
 #   unite(plot_label, plot, fert, sep='_', remove=F)
 # 
