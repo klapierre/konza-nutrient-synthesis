@@ -10,6 +10,8 @@ setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient S
 spp <- read.csv('konza_spplist.csv')
 nutnetSp <- read.csv('nutnet_spplist.csv')%>%
   mutate(sppnum=SppNum)
+viSp <- read.csv('invert_spplist.csv')%>%
+  mutate(sppnum=SppNum)
 
 
 #treatments
@@ -26,13 +28,19 @@ change_trt <- read.csv("ChANGE_treatments.csv")%>%
   select(plot_id, treatment)
 
 nutnet_trt <- read.csv('KNZ_NutNet_trt.csv')%>%
-  mutate(site='nutnet')%>%
-  select(site, plot, treat_other_name)
+  mutate(project_name='nutnet')%>%
+  select(project_name, plot, treat_other_name)
+
+ghostfire_trt <- read.csv('ghost fire_trt.csv')%>%
+  rename(plot_id=Plot)%>%
+  mutate(treatment=paste(Litter,Nutrient))%>%
+  select(plot_id, treatment)
 
 
 ###species data
-sp_pplots <- read.csv("pplots_sppcomp_2002-2016.csv")%>%
-  mutate(project_name="pplots")
+sp_pplots <- read.csv("pplots_sppcomp_2002-2018.csv")%>%
+  mutate(project_name="pplots")%>%
+  select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)
 
 sp_bgp <- read.csv("belowground_plots_sppcomp_1989-2017.csv")%>%
   mutate(project_name="BGP", 
@@ -46,28 +54,27 @@ sp_bgp <- read.csv("belowground_plots_sppcomp_1989-2017.csv")%>%
   #check with john about why some data has no spp id, genus, or species
   filter(genus_species!=' ')%>%
   right_join(bgp_trt)%>%
-  mutate(project_name=ifelse(treatment=='u_u_n'|treatment=='u_u_c'|treatment=='u_u_p'|treatment=='u_u_b', 'BGP unburned', 'BGP burned'))
+  mutate(project_name=ifelse(treatment=='u_u_n'|treatment=='u_u_c'|treatment=='u_u_p'|treatment=='u_u_b', 'BGP unburned', 'BGP burned'))%>%
+  select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)
 
-sp_change <- read.csv("ChANGE_sppcomp_2013-2017.csv")%>%
+sp_change <- read.csv("ChANGE_sppcomp_2013-2018.csv")%>%
   mutate(project_name='ChANGE',
          calendar_year=Year,
          plot_id=as.numeric(Plot), 
          genus_species=Species)%>%
-  group_by(project_name, calendar_year, plot_id, genus_species)%>%
-  mutate(abundance=as.numeric(max(June,August)))%>%
-  ungroup()%>%
+  mutate(abundance=pmax(June,August))%>%
   select(project_name, calendar_year, plot_id, genus_species, abundance)%>%
   right_join(change_trt)
 
-sp_invert <- read.csv('VI_sppcomp_2008-2017.csv')%>%
+sp_invert <- read.csv('VI_sppcomp_2008-2019.csv')%>%
   mutate(project_name='invert', calendar_year=year, plot_id=plot, treatment=paste(NPK, exclose, insecticide, sep='_'), abundance=rel_cover, spnum=sppnum)%>%
-  left_join(spp)%>%
-  mutate(genus_species2=paste(genus, spp))%>%
-  mutate(genus_species=ifelse(spnum==795, 'stellaria media', genus_species2))%>%
+  left_join(viSp)%>%
+  mutate(genus_species=paste(genus, species))%>%
   select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)%>%
-  filter(genus_species!='bare ground')
+  filter(genus_species!='bare ground')%>%
+  filter(calendar_year<2019) #cessation begins
 
-sp_nutnet <- read.csv('nutnet_sppcomp_2007-2017.csv')%>%
+sp_nutnet <- read.csv('nutnet_sppcomp_2007-2019.csv')%>%
   select(-date, -note_cover)%>%
   spread(key=season, value=cover, fill=0)%>%
   group_by(year, plot, taxa)%>%
@@ -76,20 +83,20 @@ sp_nutnet <- read.csv('nutnet_sppcomp_2007-2017.csv')%>%
   left_join(nutnet_trt)%>%
   select(-taxa)%>%
   left_join(nutnetSp)%>%
-  mutate(project_name='nutnet', calendar_year=year, plot_id=plot, treatment=treat_other_name, genus_species=taxa, abundance=cover)%>%
+  mutate(genus_species=ifelse(taxa=='Muhlenbergia cuspidata', 'Muhlenbergia racemosa', ifelse(taxa=='Euphorbia serpens', 'Euphorbia nutans', as.character(taxa))))%>%
+  mutate(project_name='nutnet', calendar_year=year, plot_id=plot, treatment=treat_other_name, abundance=cover)%>%
   select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)%>%
-  filter(genus_species!='bare ground', treatment!='fence'&treatment!='NPK_fence')
+  filter(genus_species!='bare ground', treatment!='fence'&treatment!='NPK_fence')%>%
+  filter(calendar_year<2019) #for consistency with other datasets
 
-# sp_ghostfire_clean<-read.csv("ghost fire_spp comp_2014-2015.csv")%>%
-#   mutate(genus_species=Species,
-#   project_name='ghost fire',
-#   calendar_year=Year)%>%
-#   group_by(project_name, calendar_year, genus_species)%>%
-#   mutate(abundance=max(June,August))%>%
-#   select(project_name, calendar_year, genus_species, abundance, Burn.Trt, Block, Plot)
-# 
-# sp_ghostfire<-merge(sp_ghostfire_clean, ghostfire_trt, by=c('Burn.Trt', 'Block', 'Plot'))%>%
-#   select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)
+sp_ghostfire<-read.csv("ghost fire_spp comp_2014-2018.csv")%>%
+  mutate(genus_species=paste(genus,species), project_name=ifelse(Burn.Trt=='Annual', 'GF Burned', 'GF Unburned'), calendar_year=Year, plot_id=paste(Block,Plot, sep=''))%>%
+  group_by(project_name, calendar_year, genus_species, plot_id)%>%
+  summarise(abundance=max(cover))%>%
+  ungroup()%>%
+  select(project_name, calendar_year, genus_species, abundance, plot_id)%>%
+  left_join(ghostfire_trt)%>%
+  select(project_name, calendar_year, plot_id, treatment, genus_species, abundance)
 
 # sp_restoration <- read.csv('restoration plots_spp comp_1999-2012.csv')%>%
 #   filter(DEPTH==1)%>%
@@ -180,12 +187,12 @@ sp_all <- sp_pplots%>%
   rbind(sp_bgp)%>%
   rbind(sp_change)%>%
   rbind(sp_invert)%>%
-  rbind(sp_nutnet)
-  # rbind(sp_ghostfire)%>%
+  rbind(sp_nutnet)%>%
+  rbind(sp_ghostfire)
   # rbind(sp_restoration)%>%
   # rbind(sp_ukulinga)
 
-# write.csv(sp_all, 'Konza_nutrient synthesis_spp comp.csv', row.names=F)
+# write.csv(sp_all, 'Konza_nutrient synthesis_spp comp_11152019.csv', row.names=F)
 
 # #anpp data
 # anpp_all <- anpp_pplots%>%
