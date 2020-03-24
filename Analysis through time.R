@@ -747,13 +747,13 @@ ggplot(herbivores, aes(x=grasshopper_abund, y=composition_change)) +
   geom_point(size=5) +
   facet_wrap(~project_name) +
   ylab('Yearly Community Change') + xlab('Grasshopper Abundance')
-#export 1000x800
+#export 600x600
 
 ggplot(herbivores, aes(x=small_mammal_abund, y=composition_change)) +
   geom_point(size=5) +
   facet_wrap(~project_name) +
   ylab('Yearly Community Change') + xlab('Small Mammal Abundance')
-#export 1000x800
+#export 600x600
 
 
 #comparing to weather data
@@ -781,42 +781,90 @@ ggplot(precip, aes(x=AprSeptPrecip, y=composition_change)) +
 
 
 
-###comparing difference to covariates (herbivores, weather)
+# ###comparing difference to covariates (herbivores, weather)
+# 
+# herbivoresDiff <- read.csv('konza_herbivore_site mean.csv')%>%
+#   rename(calendar_year=year)%>%
+#   left_join(compDiff)%>%
+#   filter(treatment22=='b_u_n'|treatment22=='u_u_n'|treatment22=='N2P0'|treatment22=='N'|treatment22=='NPK_x_x')
+# 
+# ggplot(herbivoresDiff, aes(x=grasshopper_abund, y=composition_diff)) +
+#   geom_point(size=5) +
+#   facet_wrap(~project_name) +
+#   ylab('Community Difference') + xlab('Grasshopper Abundance')
+# #export 1000x800
+# 
+# ggplot(herbivoresDiff, aes(x=small_mammal_abund, y=composition_diff)) +
+#   geom_point(size=5) +
+#   facet_wrap(~project_name) +
+#   ylab('Community Difference') + xlab('Small Mammal Abundance')
+# #export 1000x800
+# 
+# 
+# #comparing to weather data
+# precipDiff <- read.csv("WETDRY.csv")%>%
+#   rename(calendar_year=YEAR)%>%
+#   select(calendar_year, AprSeptPrecip, AnnualPrecip)%>%
+#   left_join(compDiff)%>%
+#   filter(treatment22=='b_u_n'|treatment22=='u_u_n'|treatment22=='N2P0'|treatment22=='N'|treatment22=='NPK_x_x')
+# 
+# ggplot(precipDiff, aes(x=AnnualPrecip, y=composition_diff)) +
+#   geom_point(size=5) +
+#   facet_wrap(~project_name) +
+#   ylab('Community Difference') + xlab('Annual Precipitation (mm)')
+# #export 1000x800
+# 
+# ggplot(precipDiff, aes(x=AprSeptPrecip, y=composition_diff)) +
+#   geom_point(size=5) +
+#   facet_wrap(~project_name) +
+#   ylab('Community Difference') + xlab('Apr-Sep Precipitation (mm)')
+# #export 1000x800
 
-herbivoresDiff <- read.csv('konza_herbivore_site mean.csv')%>%
-  rename(calendar_year=year)%>%
-  left_join(compDiff)%>%
-  filter(treatment22=='b_u_n'|treatment22=='u_u_n'|treatment22=='N2P0'|treatment22=='N'|treatment22=='NPK_x_x')
 
-ggplot(herbivoresDiff, aes(x=grasshopper_abund, y=composition_diff)) +
+#velocity of change
+compChangeYearly <- compChange%>%
+  filter(comparison=='yearly')
+firstYear <- compChange%>%
+  group_by(project_name, treatment)%>%
+  summarise(min_year=min(calendar_year))%>%
+  ungroup()
+
+maxChange <- compChange%>%
+  filter(comparison=='yearly')%>%
+  mutate(ctl=ifelse(treatment %in% c('control','b_u_c','N1P0','u_u_c','x_x_x'), 1, ifelse(treatment==0, 1, ifelse(treatment=='P C'&project_name=='GF Unburned', 1, ifelse(treatment=='A C'&project_name=='GF Burned', 1, 0)))))%>%
+  filter(ctl==0, composition_change!='NA')%>%
+  # filter(treatment %in% c('N2P0', 'b_u_n', 'u_u_n', 'N', 10, 'NPK_x_x', 'A U', 'P U'))%>%
+  group_by(project_name, treatment)%>%
+  summarise(max_change=max(composition_change))%>%
+  ungroup()%>%
+  mutate(composition_change=max_change)%>%
+  left_join(compChangeYearly)%>%
+  left_join(firstYear)%>%
+  mutate(change_velocity=max_change/(calendar_year2-min_year))
+
+
+# red= n only
+# blue=p only
+# purple=n+p
+# other trt=black
+
+maxChange$treatment <- factor(maxChange$treatment, levels=c('2.5','5','7.5','10','15','20','30','A U','P U','N','b_u_n','u_u_n','N2P0',
+                                                          'P','b_u_p','u_u_p','N1P1','N1P2','N1P3',
+                                                          'b_u_n+p','u_u_n+p','N2P1','N2P2','N2P3','NP',
+                                                          'A C','A S','P C', 'P S', 'K','NPK','NPK_caged_insecticide','NPK_caged_x','NPK_x_insecticide','NPK_x_x','x_caged_insecticide','x_caged_x','x_x_insecticide','PK','NK'))
+
+ggplot(data=maxChange, aes(x=project_name, y=change_velocity, color=treatment)) + 
   geom_point(size=5) +
-  facet_wrap(~project_name) +
-  ylab('Community Difference') + xlab('Grasshopper Abundance')
-#export 1000x800
+  scale_color_manual(name="Treatment", 
+                     breaks=c('2.5','5','7.5','10','15','20','30','A U','P U','N','b_u_n','u_u_n','N2P0',
+                              'P','b_u_p','u_u_p','N1P1','N1P2','N1P3',
+                              'b_u_n+p','u_u_n+p','N2P1','N2P2','N2P3','NP',
+                              'A C','A S','P C', 'P S', 'K','NPK','NPK_caged_insecticide','NPK_caged_x','NPK_x_insecticide','NPK_x_x','x_caged_insecticide','x_caged_x','x_x_insecticide','PK','NK'),
+                     values=c('red','red','red','red','red','red','red','red','red','red','red','red','red',
+                              'blue','blue','blue','blue','blue','blue',
+                              'purple','purple','purple','purple','purple','purple',
+                              'black','black','black','black','black','black','black','black','black','black','black','black','black','black','black')) +
+  xlab('Experiment') + ylab('Velocity of Composition Change')
+#export at 1000x600
 
-ggplot(herbivoresDiff, aes(x=small_mammal_abund, y=composition_diff)) +
-  geom_point(size=5) +
-  facet_wrap(~project_name) +
-  ylab('Community Difference') + xlab('Small Mammal Abundance')
-#export 1000x800
-
-
-#comparing to weather data
-precipDiff <- read.csv("WETDRY.csv")%>%
-  rename(calendar_year=YEAR)%>%
-  select(calendar_year, AprSeptPrecip, AnnualPrecip)%>%
-  left_join(compDiff)%>%
-  filter(treatment22=='b_u_n'|treatment22=='u_u_n'|treatment22=='N2P0'|treatment22=='N'|treatment22=='NPK_x_x')
-
-ggplot(precipDiff, aes(x=AnnualPrecip, y=composition_diff)) +
-  geom_point(size=5) +
-  facet_wrap(~project_name) +
-  ylab('Community Difference') + xlab('Annual Precipitation (mm)')
-#export 1000x800
-
-ggplot(precipDiff, aes(x=AprSeptPrecip, y=composition_diff)) +
-  geom_point(size=5) +
-  facet_wrap(~project_name) +
-  ylab('Community Difference') + xlab('Apr-Sep Precipitation (mm)')
-#export 1000x800
 
