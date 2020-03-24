@@ -157,6 +157,17 @@ sp_all <- sp_pplots%>%
 #   rbind(anpp_restoration)
 
 
+#grasshopper data
+grasshopper <- read.csv('konza_grasshoppers.csv')%>%
+  filter(WATERSHED %in% c('000b', '001d', '001D', '002c', '002C', '002d', '002D', '004b', '004B', '004d', '004D', '004f', '004F', '020b', '020B', '0spb', '0SpB'), TOTAL!='')%>%
+  group_by(RECYEAR, WATERSHED)%>%
+  summarize(count=mean(as.numeric(TOTAL)))%>%
+  ungroup()%>%
+  group_by(RECYEAR)%>%
+  summarize(grasshopper_count=mean(count))%>%
+  ungroup()%>%
+  rename(year=RECYEAR)
 
+#write.csv(grasshopper, 'grasshopper_yearly_mean.csv', row.names=F)
 
 
