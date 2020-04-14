@@ -18,7 +18,11 @@ setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\konza projects\\Konza Nutri
 
 ###data
 #community data
-community<-read.csv("Konza_nutrient synthesis_spp comp_11152019.csv")%>%
+community<-read.csv("Konza_nutrient synthesis_spp comp_04142020.csv")%>%
+  #consistently name control plots
+  mutate(treatment2=ifelse(treatment %in% c('x_x_x', 'u_u_c', 'control', 'N1P0', 'b_u_c', '0'), 'control', ifelse(treatment=='A C'&project_name=='GF Burned', 'control', ifelse(treatment=='P C'&project_name=='GF Unburned', 'control', as.character(treatment)))))%>%
+  select(-treatment)%>%
+  rename(treatment=treatment2)%>%
   #create a replicate variable unique to each experiment
   mutate(replicate=paste(project_name, treatment, plot_id, sep='::'))%>%
   mutate(project_trt=paste(project_name, treatment, sep='::'))%>%
@@ -43,7 +47,6 @@ trt <- community%>%
 proj <- community%>%
   select(project_name)%>%
   unique()
-  
 
 
 
@@ -84,21 +87,33 @@ for(i in 1:length(trt$project_trt)) {
 compChange <- compChange2%>%
   separate(project_trt, c('project_name', 'treatment'), sep='::')
 
-##figures
 
-# #yearly RAC changes
-# ggplot(data=yearlyRACchange, aes(x=calendar_year2, y=richness_change, group=treatment))+
-#   geom_point(aes(color=treatment))+
-#   geom_line()+
-#   geom_hline(yintercept = 0)+
-#   #theme(legend.position = "none")+
-#   facet_wrap(~project_name, scales="free")
 
-##yearly change
-# red= n only
-# blue=p only
-# purple=n+p
-#control=black
+
+###calculate difference metrics
+###compositional difference
+
+#makes an empty dataframe
+compDiff=data.frame(row.names=1) 
+
+for(i in 1:length(proj$project_name)) {
+  
+  #creates a dataset for each unique year, trt, exp combo
+  subset <- community[community$project_name==as.character(proj$project_name[i]),]
+  
+  #calculating composition difference to control plots
+  diff <- multivariate_difference(subset, time.var = 'calendar_year', species.var = "genus_species", abundance.var = 'abundance', replicate.var = 'plot_id', treatment.var='treatment', reference.treatment='control')%>%
+    mutate(project_name=proj$project_name[i])
+  
+  #pasting into the dataframe made for this analysis
+  compDiff=rbind(diff, compDiff)  
+}
+
+
+
+
+##change figures
+
 theme_set(theme_bw(12))
 
 pplots<-
