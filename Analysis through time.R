@@ -14,6 +14,13 @@ setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient S
 #kim's desktop:
 setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\Threshold project\\data\\2018 analysis')
 
+theme_set(theme_bw())
+theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=element_text(size=16),
+             axis.title.y=element_text(size=20, angle=90, vjust=0.5), axis.text.y=element_text(size=16),
+             plot.title = element_text(size=24, vjust=2),
+             panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
+             legend.title=element_text(size=20), legend.text=element_text(size=20))
+
 
 
 ###data
@@ -110,776 +117,218 @@ for(i in 1:length(proj$project_name)) {
 }
 
 
+##figures
 
-
-##change figures
-
-theme_set(theme_bw(12))
-
-pplots<-
-  ggplot(data=subset(compChange, project_name=="pplots"&comparison=='yearly'&treatment!='N1P1'&treatment!='N1P2'&treatment!='N2P1'&treatment!='N2P2'), aes(x=as.numeric(calendar_year2), y=composition_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("control", "N0 P10","N10 P0","N10 P10"), values=c("black", "blue","red","purple"))+
-  geom_line()+
-  # geom_vline(xintercept = 2004, linetype="longdash")+
-  # geom_vline(xintercept = 2006)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Yearly Community Change")+
-  ggtitle("Phosphorus Plots")+
-  ylim(min=0, max=0.82)
-
-BGP_ub<-
-  ggplot(data=subset(compChange, project_name=="BGP unburned"&comparison=='yearly'), aes(x=as.numeric(calendar_year2), y=composition_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N0 P0", "N10 P0", "N0 P1"), values=c("black","red","blue"))+
-  geom_line()+
-  # geom_vline(xintercept = 1989)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Yearly Community Change")+
-  ggtitle("Belowground Plots Unburned")+
-  ylim(min=0, max=0.82)
-
-BGP_b<-
-  ggplot(data=subset(compChange, project_name=="BGP burned"&treatment!='u_u_n+p'&comparison=='yearly'), aes(x=as.numeric(calendar_year2), y=composition_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("control", "N10 P0", "N10 P1", "N0 P1"), values=c("black","red","purple","blue"))+
-  geom_line()+
-  # geom_vline(xintercept = 1989,linetype="longdash")+
-  # geom_vline(xintercept = 1994)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Yearly Community Change")+
-  ggtitle("Belowground Plots Burned")+
-  ylim(min=0, max=0.82)
-
-nutnet<-
-  ggplot(data=subset(compChange, project_name=="nutnet"&treatment!="fence"&treatment!="NPKfence"&treatment!="K"&treatment!="PK"&treatment!="NK"&treatment!="NPK"&comparison=='yearly'), aes(x=as.numeric(calendar_year2), y=composition_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("control","N10 P0 K0","N10 P10 K0","N0 P10 K0"), values=c("black", "red", "purple","blue"))+
-  geom_line()+
-  # geom_vline(xintercept = 2010,linetype="longdash")+
-  # geom_vline(xintercept = 2012)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Yearly Community Change")+
-  ggtitle("Nutrient Network")+
-  ylim(min=0, max=0.82)
-
-invert<-
-  ggplot(data=subset(compChange, project_name=="invert"&treatment!="x_caged_x"&treatment!="x_caged_insecticide"&treatment!="NPK_caged_insecticide"&treatment!="NPK_caged_x"&treatment!="x_x_insecticide"&treatment!="NPK_x_insecticide"&comparison=='yearly'), aes(x=as.numeric(calendar_year2), y=composition_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N10 P10 K10", 'Control'), values=c("purple","black"))+
-  geom_line()+
-  # geom_vline(xintercept = 2011,linetype="longdash")+
-  # geom_vline(xintercept = 2013)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Yearly Community Change")+
-  ggtitle("Invertebrate Removal")+
-  ylim(min=0, max=0.82)
-
-GF_ub<-
-  ggplot(data=subset(compChange, project_name=="GF Unburned"&treatment!="P S"&treatment!="A C"&treatment!="A S"&treatment!="A U"&comparison=='yearly'), aes(x=as.numeric(calendar_year2), y=composition_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("Control", 'N10'), values=c("black","red"))+
-  geom_line()+
-  # geom_vline(xintercept = 2011,linetype="longdash")+
-  # geom_vline(xintercept = 2013)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Yearly Community Change")+
-  ggtitle("Ghost Fire Unburned")+
-  ylim(min=0, max=0.82)
-
-GF_b<-
-  ggplot(data=subset(compChange, project_name=="GF Burned"&treatment!="A S"&treatment!="P C"&treatment!="P S"&treatment!="P U"&comparison=='yearly'), aes(x=as.numeric(calendar_year2), y=composition_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("Control", 'N10'), values=c("black","red"))+
-  geom_line()+
-  # geom_vline(xintercept = 2011,linetype="longdash")+
-  # geom_vline(xintercept = 2013)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Yearly Community Change")+
-  ggtitle("Ghost Fire Burned")+
-  ylim(min=0, max=0.82)
-
-change<-
-  ggplot(data=subset(compChange, project_name=="ChANGE"&treatment!="2.5"&treatment!="5"&treatment!="7.5"&treatment!="15"&treatment!="20"&treatment!="30"&comparison=='yearly'), aes(x=as.numeric(calendar_year2), y=composition_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("Control", 'N10'), values=c("black","red"))+
-  geom_line()+
-  # geom_vline(xintercept = 2011,linetype="longdash")+
-  # geom_vline(xintercept = 2013)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Yearly Community Change")+
-  ggtitle("ChANGE")+
-  ylim(min=0, max=0.82)
-
-
-grid.arrange(BGP_ub, BGP_b, pplots, nutnet, invert, GF_ub, GF_b, change)
-#export at 1600x1000
-
-
-
-##pretty graphs - cumulative change
+##compositional difference
 # red= n only
 # blue=p only
 # purple=n+p
-#control=black
+# black=other combo
 theme_set(theme_bw(12))
 
 pplots<-
-  ggplot(data=subset(compChange, project_name=="pplots"&comparison=='cumulative'&treatment!='N1P1'&treatment!='N1P2'&treatment!='N2P1'&treatment!='N2P2'), aes(x=as.numeric(calendar_year2), y=composition_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("control", "N0 P10","N10 P0","N10 P10"), values=c("black", "blue","red","purple"))+
+  ggplot(data=subset(compDiff, project_name=="pplots"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
+  geom_point(aes(color=treatment2), size=5)+
+  scale_color_manual(name="Treatment",labels=c("N0 P2.5", "N0 P5", "N0 P10","N10 P0","N10 P2.5","N10 P5","N10 P10"), values=c("blue","blue","blue","red","purple","purple","purple"))+
   geom_line()+
   # geom_vline(xintercept = 2004, linetype="longdash")+
   # geom_vline(xintercept = 2006)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   xlab("Year")+
-  ylab("Cumulative Community Change")+
+  ylab("Community Difference")+
   ggtitle("Phosphorus Plots")+
-  ylim(min=0, max=0.84)
+  ylim(min=0, max=0.8)
 
 BGP_ub<-
-  ggplot(data=subset(compChange, project_name=="BGP unburned"&comparison=='cumulative'), aes(x=as.numeric(calendar_year2), y=composition_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N0 P0", "N10 P0", "N0 P1"), values=c("black","red","blue"))+
-  geom_line()+
-  # geom_vline(xintercept = 1989)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Cumulative Community Change")+
-  ggtitle("Belowground Plots Unburned")+
-  ylim(min=0, max=0.84)
-
-BGP_b<-
-  ggplot(data=subset(compChange, project_name=="BGP burned"&treatment!='u_u_n+p'&comparison=='cumulative'), aes(x=as.numeric(calendar_year2), y=composition_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("control", "N10 P0", "N10 P1", "N0 P1"), values=c("black","red","purple","blue"))+
-  geom_line()+
-  # geom_vline(xintercept = 1989,linetype="longdash")+
-  # geom_vline(xintercept = 1994)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Cumulative Community Change")+
-  ggtitle("Belowground Plots Burned")+
-  ylim(min=0, max=0.84)
-
-nutnet<-
-  ggplot(data=subset(compChange, project_name=="nutnet"&treatment!="fence"&treatment!="NPKfence"&treatment!="K"&treatment!="PK"&treatment!="NK"&treatment!="NPK"&comparison=='cumulative'), aes(x=as.numeric(calendar_year2), y=composition_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("control","N10 P0 K0","N10 P10 K0","N0 P10 K0"), values=c("black", "red", "purple","blue"))+
-  geom_line()+
-  # geom_vline(xintercept = 2010,linetype="longdash")+
-  # geom_vline(xintercept = 2012)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Cumulative Community Change")+
-  ggtitle("Nutrient Network")+
-  ylim(min=0, max=0.84)
-
-invert<-
-  ggplot(data=subset(compChange, project_name=="invert"&treatment!="x_caged_x"&treatment!="x_caged_insecticide"&treatment!="NPK_caged_insecticide"&treatment!="NPK_caged_x"&treatment!="x_x_insecticide"&treatment!="NPK_x_insecticide"&comparison=='cumulative'), aes(x=as.numeric(calendar_year2), y=composition_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N10 P10 K10", 'Control'), values=c("purple","black"))+
-  geom_line()+
-  # geom_vline(xintercept = 2011,linetype="longdash")+
-  # geom_vline(xintercept = 2013)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Cumulative Community Change")+
-  ggtitle("Invertebrate Removal")+
-  ylim(min=0, max=0.84)
-
-GF_ub<-
-  ggplot(data=subset(compChange, project_name=="GF Unburned"&treatment!="P S"&treatment!="A C"&treatment!="A S"&treatment!="A U"&comparison=='cumulative'), aes(x=as.numeric(calendar_year2), y=composition_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("Control", 'N10'), values=c("black","red"))+
-  geom_line()+
-  # geom_vline(xintercept = 2011,linetype="longdash")+
-  # geom_vline(xintercept = 2013)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Cumulative Community Change")+
-  ggtitle("Ghost Fire Unburned")+
-  ylim(min=0, max=0.84)
-
-GF_b<-
-  ggplot(data=subset(compChange, project_name=="GF Burned"&treatment!="A S"&treatment!="P C"&treatment!="P S"&treatment!="P U"&comparison=='cumulative'), aes(x=as.numeric(calendar_year2), y=composition_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("Control", 'N10'), values=c("black","red"))+
-  geom_line()+
-  # geom_vline(xintercept = 2011,linetype="longdash")+
-  # geom_vline(xintercept = 2013)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Cumulative Community Change")+
-  ggtitle("Ghost Fire Burned")+
-  ylim(min=0, max=0.84)
-
-change<-
-  ggplot(data=subset(compChange, project_name=="ChANGE"&treatment!="2.5"&treatment!="5"&treatment!="7.5"&treatment!="15"&treatment!="20"&treatment!="30"&comparison=='cumulative'), aes(x=as.numeric(calendar_year2), y=composition_change, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("Control", 'N10'), values=c("black","red"))+
-  geom_line()+
-  # geom_vline(xintercept = 2011,linetype="longdash")+
-  # geom_vline(xintercept = 2013)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Cumulative Community Change")+
-  ggtitle("ChANGE")+
-  ylim(min=0, max=0.84)
-
-
-grid.arrange(BGP_ub, BGP_b, pplots, nutnet, invert, GF_ub, GF_b, change)
-#export at 1600x1000
-
-
-
-#calculate difference in compositional changes
-compChangeCtl <- compChange%>%
-  mutate(ctl=ifelse(treatment %in% c('control','b_u_c','N1P0','u_u_c','x_x_x'), 1, ifelse(treatment==0, 1, ifelse(treatment=='P C'&project_name=='GF Unburned', 1, ifelse(treatment=='A C'&project_name=='GF Burned', 1, 0)))))%>%
-  filter(ctl==1)%>%
-  select(-ctl)%>%
-  rename(composition_change_ctl=composition_change)%>%
-  select(-treatment, -dispersion_change)
-
-compChangeDiff <- compChange%>%
-  mutate(ctl=ifelse(treatment %in% c('control','b_u_c','N1P0','u_u_c','x_x_x'), 1, ifelse(treatment==0, 1, ifelse(treatment=='P C'&project_name=='GF Unburned', 1, ifelse(treatment=='A C'&project_name=='GF Burned', 1, 0)))))%>%
-  filter(ctl==0)%>%
-  select(-ctl)%>%
-  left_join(compChangeCtl)%>%
-  mutate(composition_change_diff=composition_change-composition_change_ctl)
-
-
-##pretty graphs - cumulative change difference
-# red= n only
-# blue=p only
-# purple=n+p
-#control=black
-theme_set(theme_bw(12))
-
-pplots<-
-  ggplot(data=subset(compChangeDiff, project_name=="pplots"&comparison=='cumulative'&treatment!='N1P1'&treatment!='N1P2'&treatment!='N2P1'&treatment!='N2P2'), aes(x=as.numeric(calendar_year2), y=composition_change_diff, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N0 P10","N10 P0","N10 P10"), values=c("blue","red","purple"))+
-  geom_line()+
-  # geom_vline(xintercept = 2004, linetype="longdash")+
-  # geom_vline(xintercept = 2006)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Cumulative Community Change")+
-  ggtitle("Phosphorus Plots")+
-  ylim(min=-0.2, max=0.5)
-
-BGP_ub<-
-  ggplot(data=subset(compChangeDiff, project_name=="BGP unburned"&comparison=='cumulative'), aes(x=as.numeric(calendar_year2), y=composition_change_diff, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
+  ggplot(data=subset(compDiff, project_name=="BGP unburned"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
+  geom_point(aes(color=treatment2), size=5)+
   scale_color_manual(name="Treatment",labels=c("N10 P0", "N0 P1"), values=c("red","blue"))+
   geom_line()+
   # geom_vline(xintercept = 1989)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   xlab("Year")+
-  ylab("Cumulative Community Change")+
+  ylab("Community Difference")+
   ggtitle("Belowground Plots Unburned")+
-  ylim(min=-0.2, max=0.5)
+  ylim(min=0, max=0.8)
 
 BGP_b<-
-  ggplot(data=subset(compChangeDiff, project_name=="BGP burned"&treatment!='u_u_n+p'&comparison=='cumulative'), aes(x=as.numeric(calendar_year2), y=composition_change_diff, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
+  ggplot(data=subset(compDiff, project_name=="BGP burned"&treatment2!='u_u_n+p'), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
+  geom_point(aes(color=treatment2), size=5)+
   scale_color_manual(name="Treatment",labels=c("N10 P0", "N10 P1", "N0 P1"), values=c("red","purple","blue"))+
   geom_line()+
   # geom_vline(xintercept = 1989,linetype="longdash")+
   # geom_vline(xintercept = 1994)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   xlab("Year")+
-  ylab("Cumulative Community Change")+
+  ylab("Community Difference")+
   ggtitle("Belowground Plots Burned")+
-  ylim(min=-0.2, max=0.5)
+  ylim(min=0, max=0.8)
 
 nutnet<-
-  ggplot(data=subset(compChangeDiff, project_name=="nutnet"&treatment!="fence"&treatment!="NPKfence"&treatment!="K"&treatment!="PK"&treatment!="NK"&treatment!="NPK"&comparison=='cumulative'), aes(x=as.numeric(calendar_year2), y=composition_change_diff, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
+  ggplot(data=subset(compDiff, project_name=="nutnet"&treatment2!="fence"&treatment2!="NPKfence"&treatment2!="K"&treatment2!="PK"&treatment2!="NK"&treatment2!="NPK"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
+  geom_point(aes(color=treatment2), size=5)+
   scale_color_manual(name="Treatment",labels=c("N10 P0 K0","N10 P10 K0","N0 P10 K0"), values=c("red", "purple","blue"))+
   geom_line()+
   # geom_vline(xintercept = 2010,linetype="longdash")+
   # geom_vline(xintercept = 2012)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   xlab("Year")+
-  ylab("Cumulative Community Change")+
+  ylab("Community Difference")+
   ggtitle("Nutrient Network")+
-  ylim(min=-0.2, max=0.5)
+  ylim(min=0, max=0.8)
 
 invert<-
-  ggplot(data=subset(compChangeDiff, project_name=="invert"&treatment!="x_caged_x"&treatment!="x_caged_insecticide"&treatment!="NPK_caged_insecticide"&treatment!="NPK_caged_x"&treatment!="x_x_insecticide"&treatment!="NPK_x_insecticide"&comparison=='cumulative'), aes(x=as.numeric(calendar_year2), y=composition_change_diff, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N10 P10 K10"), values=c("purple"))+
+  ggplot(data=subset(compDiff, project_name=="invert"&treatment2!="x_caged_x"&treatment2!="x_caged_insecticide"&treatment2!="NPK_caged_insecticide"&treatment2!="NPK_caged_x"&treatment2!="x_x_insecticide"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
+  geom_point(aes(color=treatment2), size=5)+
+  scale_color_manual(name="Treatment",labels=c("N10 P10 K10", "N10 P10 K10\n& Insecticide"), values=c("purple","black"))+
   geom_line()+
   # geom_vline(xintercept = 2011,linetype="longdash")+
   # geom_vline(xintercept = 2013)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   xlab("Year")+
-  ylab("Cumulative Community Change")+
+  ylab("Community Difference")+
   ggtitle("Invertebrate Removal")+
-  ylim(min=-0.2, max=0.5)
-
-GF_ub<-
-  ggplot(data=subset(compChangeDiff, project_name=="GF Unburned"&treatment!="P S"&treatment!="A C"&treatment!="A S"&treatment!="A U"&comparison=='cumulative'), aes(x=as.numeric(calendar_year2), y=composition_change_diff, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c('N10'), values=c("red"))+
-  geom_line()+
-  # geom_vline(xintercept = 2011,linetype="longdash")+
-  # geom_vline(xintercept = 2013)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Cumulative Community Change")+
-  ggtitle("Ghost Fire Unburned")+
-  ylim(min=-0.2, max=0.5)
-
-GF_b<-
-  ggplot(data=subset(compChangeDiff, project_name=="GF Burned"&treatment!="A S"&treatment!="P C"&treatment!="P S"&treatment!="P U"&comparison=='cumulative'), aes(x=as.numeric(calendar_year2), y=composition_change_diff, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c('N10'), values=c("red"))+
-  geom_line()+
-  # geom_vline(xintercept = 2011,linetype="longdash")+
-  # geom_vline(xintercept = 2013)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Cumulative Community Change")+
-  ggtitle("Ghost Fire Burned")+
-  ylim(min=-0.2, max=0.5)
+  ylim(min=0, max=0.8)
 
 change<-
-  ggplot(data=subset(compChangeDiff, project_name=="ChANGE"&treatment!="2.5"&treatment!="5"&treatment!="7.5"&treatment!="15"&treatment!="20"&treatment!="30"&comparison=='cumulative'), aes(x=as.numeric(calendar_year2), y=composition_change_diff, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c('N10'), values=c("red"))+
+  ggplot(data=subset(compDiff, project_name=="ChANGE"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
+  geom_point(aes(color=treatment2), size=5)+
+  scale_color_manual(name="Treatment",values=c("red","red","red","red","red","red","red"))+
   geom_line()+
   # geom_vline(xintercept = 2011,linetype="longdash")+
   # geom_vline(xintercept = 2013)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   xlab("Year")+
-  ylab("Cumulative Community Change")+
+  ylab("Community Difference")+
   ggtitle("ChANGE")+
-  ylim(min=-0.2, max=0.5)
+  ylim(min=0, max=0.8)
+
+GFburned<-
+  ggplot(data=subset(compDiff, project_name=="GF Burned"&treatment2 %in% c('A U','P U')), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
+  geom_point(aes(color=treatment2), size=5)+
+  scale_color_manual(name="Treatment",labels=c('N','N + litter'), values=c("red","black"))+
+  geom_line()+
+  # geom_vline(xintercept = 2011,linetype="longdash")+
+  # geom_vline(xintercept = 2013)+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  xlab("Year")+
+  ylab("Community Difference")+
+  ggtitle("GF Burned")+
+  ylim(min=0, max=0.8)
+
+GFunburned<-
+  ggplot(data=subset(compDiff, project_name=="GF Unburned"&treatment2 %in% c('A U','P U')), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
+  geom_point(aes(color=treatment2), size=5)+
+  scale_color_manual(name="Treatment",labels=c('N - litter','N'), values=c("black","red"))+
+  geom_line()+
+  # geom_vline(xintercept = 2011,linetype="longdash")+
+  # geom_vline(xintercept = 2013)+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  xlab("Year")+
+  ylab("Community Difference")+
+  ggtitle("GF unburned")+
+  ylim(min=0, max=0.8)
 
 
-grid.arrange(BGP_ub, BGP_b, pplots, nutnet, invert, GF_ub, GF_b, change)
+grid.arrange(BGP_ub, BGP_b, pplots, nutnet, invert, change, GFburned, GFunburned)
 #export at 1600x1000
 
 
 
+#generating figure of compositional difference by experiment year with all experiments included in one panel
 
-##pretty graphs - yearly change difference
-# red= n only
-# blue=p only
-# purple=n+p
-#control=black
-theme_set(theme_bw(12))
+#experiment year information
+experimentYear <- read.csv('experiment years.csv')
 
-pplots<-
-  ggplot(data=subset(compChangeDiff, project_name=="pplots"&comparison=='yearly'&treatment!='N1P1'&treatment!='N1P2'&treatment!='N2P1'&treatment!='N2P2'), aes(x=as.numeric(calendar_year2), y=composition_change_diff, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N0 P10","N10 P0","N10 P10"), values=c("blue","red","purple"))+
-  geom_line()+
-  # geom_vline(xintercept = 2004, linetype="longdash")+
-  # geom_vline(xintercept = 2006)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Yearly Community Change")+
-  ggtitle("Phosphorus Plots")+
-  ylim(min=-0.2, max=0.5)
+compDiffTime <- compDiff%>%
+  left_join(experimentYear)
 
-BGP_ub<-
-  ggplot(data=subset(compChangeDiff, project_name=="BGP unburned"&comparison=='yearly'), aes(x=as.numeric(calendar_year2), y=composition_change_diff, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N10 P0", "N0 P1"), values=c("red","blue"))+
-  geom_line()+
-  # geom_vline(xintercept = 1989)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Yearly Community Change")+
-  ggtitle("Belowground Plots Unburned")+
-  ylim(min=-0.2, max=0.5)
+#comp difference across all experiments
+compDiffTimeSubset <- compDiffTime%>%
+  filter(treatment2 %in% c('b_u_n','u_u_n','N2P0','N','NPK_x_x','A U','P U'))
 
-BGP_b<-
-  ggplot(data=subset(compChangeDiff, project_name=="BGP burned"&treatment!='u_u_n+p'&comparison=='yearly'), aes(x=as.numeric(calendar_year2), y=composition_change_diff, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N10 P0", "N10 P1", "N0 P1"), values=c("red","purple","blue"))+
-  geom_line()+
-  # geom_vline(xintercept = 1989,linetype="longdash")+
-  # geom_vline(xintercept = 1994)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Yearly Community Change")+
-  ggtitle("Belowground Plots Burned")+
-  ylim(min=-0.2, max=0.5)
-
-nutnet<-
-  ggplot(data=subset(compChangeDiff, project_name=="nutnet"&treatment!="fence"&treatment!="NPKfence"&treatment!="K"&treatment!="PK"&treatment!="NK"&treatment!="NPK"&comparison=='yearly'), aes(x=as.numeric(calendar_year2), y=composition_change_diff, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N10 P0 K0","N10 P10 K0","N0 P10 K0"), values=c("red", "purple","blue"))+
-  geom_line()+
-  # geom_vline(xintercept = 2010,linetype="longdash")+
-  # geom_vline(xintercept = 2012)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Yearly Community Change")+
-  ggtitle("Nutrient Network")+
-  ylim(min=-0.2, max=0.5)
-
-invert<-
-  ggplot(data=subset(compChangeDiff, project_name=="invert"&treatment!="x_caged_x"&treatment!="x_caged_insecticide"&treatment!="NPK_caged_insecticide"&treatment!="NPK_caged_x"&treatment!="x_x_insecticide"&treatment!="NPK_x_insecticide"&comparison=='yearly'), aes(x=as.numeric(calendar_year2), y=composition_change_diff, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N10 P10 K10"), values=c("purple"))+
-  geom_line()+
-  # geom_vline(xintercept = 2011,linetype="longdash")+
-  # geom_vline(xintercept = 2013)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Yearly Community Change")+
-  ggtitle("Invertebrate Removal")+
-  ylim(min=-0.2, max=0.5)
-
-GF_ub<-
-  ggplot(data=subset(compChangeDiff, project_name=="GF Unburned"&treatment!="P S"&treatment!="A C"&treatment!="A S"&treatment!="A U"&comparison=='yearly'), aes(x=as.numeric(calendar_year2), y=composition_change_diff, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c('N10'), values=c("red"))+
-  geom_line()+
-  # geom_vline(xintercept = 2011,linetype="longdash")+
-  # geom_vline(xintercept = 2013)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Yearly Community Change")+
-  ggtitle("Ghost Fire Unburned")+
-  ylim(min=-0.2, max=0.5)
-
-GF_b<-
-  ggplot(data=subset(compChangeDiff, project_name=="GF Burned"&treatment!="A S"&treatment!="P C"&treatment!="P S"&treatment!="P U"&comparison=='yearly'), aes(x=as.numeric(calendar_year2), y=composition_change_diff, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c('N10'), values=c("red"))+
-  geom_line()+
-  # geom_vline(xintercept = 2011,linetype="longdash")+
-  # geom_vline(xintercept = 2013)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Yearly Community Change")+
-  ggtitle("Ghost Fire Burned")+
-  ylim(min=-0.2, max=0.5)
-
-change<-
-  ggplot(data=subset(compChangeDiff, project_name=="ChANGE"&treatment!="2.5"&treatment!="5"&treatment!="7.5"&treatment!="15"&treatment!="20"&treatment!="30"&comparison=='yearly'), aes(x=as.numeric(calendar_year2), y=composition_change_diff, group=treatment))+
-  geom_point(aes(color=treatment), size=5)+
-  scale_color_manual(name="Treatment",labels=c('N10'), values=c("red"))+
-  geom_line()+
-  # geom_vline(xintercept = 2011,linetype="longdash")+
-  # geom_vline(xintercept = 2013)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Year")+
-  ylab("Yearly Community Change")+
-  ggtitle("ChANGE")+
-  ylim(min=-0.2, max=0.5)
-
-
-grid.arrange(BGP_ub, BGP_b, pplots, nutnet, invert, GF_ub, GF_b, change)
-#export at 1600x1000
+ggplot(data=subset(compDiffTimeSubset,experiment_year>0), aes(x=experiment_year, y=composition_diff, color=project_name)) +
+  geom_point(size=5) +
+  geom_line(aes(group=interaction(project_name,treatment2))) +
+  xlab('Experiment Year') +
+  ylab('Composition Difference') +
+  scale_color_discrete(name='Experiment') +
+  # ylim(0,0.8) +
+  xlim(0,30)
+#export at 1000x800
 
 
 
+###comparing difference to covariates (herbivores, weather)
 
-# ###compositional difference from control plots
-# 
-# #makes an empty dataframe
-# compDiff=data.frame(row.names=1) 
-# 
-# ###first: composition_diff is the distance between trt and controls
-# ####second: dispersion is the average dispersion of plots within a treatment to treatment centriod
-# for(i in 1:length(proj$project_name)) {
-#   
-#   #creates a dataset for each unique year, trt, exp combo
-#   subset <- community[community$project_name==as.character(proj$project_name[i]),]%>%
-#     mutate(treatment2=as.character(ifelse(treatment=='control', 'control', ifelse(treatment=='b_u_c', 'control', ifelse(treatment=='N1P0', 'control', ifelse(treatment=='u_u_c', 'control', ifelse(treatment=='x_x_x', 'control', ifelse(treatment==0, 'control', as.character(treatment)))))))))
-#   
-#   #calculating composition diffrence from controls
-#   all <- multivariate_difference(subset, time.var = 'calendar_year', species.var = "genus_species", abundance.var = 'abundance', replicate.var = 'plot_id', treatment.var='treatment2', reference.treatment='control')%>%
-#     mutate(project_name=proj$project_name[i])
-#   
-#   #pasting into the dataframe made for this analysis
-#   compDiff=rbind(all, compDiff)  
-# }
-# 
-# 
-# 
-# ##figures
-# 
-# ##compositional difference
-# # red= n only
-# # blue=p only
-# # purple=n+p
-# #control=black
-# theme_set(theme_bw(12))
-# 
-# pplots<-
-#   ggplot(data=subset(compDiff, project_name=="pplots"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment22))+
-#   geom_point(aes(color=treatment22), size=5)+
-#   scale_color_manual(name="Treatment",labels=c("N0 P2.5", "N0 P5", "N0 P10","N10 P0","N10 P2.5","N10 P5","N10 P10"), values=c("blue","blue","blue","red","purple","purple","purple"))+
-#   geom_line()+
-#   # geom_vline(xintercept = 2004, linetype="longdash")+
-#   # geom_vline(xintercept = 2006)+
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-#   xlab("Year")+
-#   ylab("Community Difference")+
-#   ggtitle("Phosphorus Plots")+
-#   ylim(min=0, max=0.8)
-# 
-# BGP_ub<-
-#   ggplot(data=subset(compDiff, project_name=="BGP unburned"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment22))+
-#   geom_point(aes(color=treatment22), size=5)+
-#   scale_color_manual(name="Treatment",labels=c("N10 P0", "N0 P1"), values=c("red","blue"))+
-#   geom_line()+
-#   # geom_vline(xintercept = 1989)+
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-#   xlab("Year")+
-#   ylab("Community Difference")+
-#   ggtitle("Belowground Plots Unburned")+
-#   ylim(min=0, max=0.8)
-# 
-# BGP_b<-
-#   ggplot(data=subset(compDiff, project_name=="BGP burned"&treatment22!='u_u_n+p'), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment22))+
-#   geom_point(aes(color=treatment22), size=5)+
-#   scale_color_manual(name="Treatment",labels=c("N10 P0", "N10 P1", "N0 P1"), values=c("red","purple","blue"))+
-#   geom_line()+
-#   # geom_vline(xintercept = 1989,linetype="longdash")+
-#   # geom_vline(xintercept = 1994)+
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-#   xlab("Year")+
-#   ylab("Community Difference")+
-#   ggtitle("Belowground Plots Burned")+
-#   ylim(min=0, max=0.8)
-# 
-# nutnet<-
-#   ggplot(data=subset(compDiff, project_name=="nutnet"&treatment22!="fence"&treatment22!="NPKfence"&treatment22!="K"&treatment22!="PK"&treatment22!="NK"&treatment22!="NPK"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment22))+
-#   geom_point(aes(color=treatment22), size=5)+
-#   scale_color_manual(name="Treatment",labels=c("N10 P0 K0","N10 P10 K0","N0 P10 K0"), values=c("red", "purple","blue"))+
-#   geom_line()+
-#   # geom_vline(xintercept = 2010,linetype="longdash")+
-#   # geom_vline(xintercept = 2012)+
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-#   xlab("Year")+
-#   ylab("Community Difference")+
-#   ggtitle("Nutrient Network")+
-#   ylim(min=0, max=0.8)
-# 
-# invert<-
-#   ggplot(data=subset(compDiff, project_name=="invert"&treatment22!="x_caged_x"&treatment22!="x_caged_insecticide"&treatment22!="NPK_caged_insecticide"&treatment22!="NPK_caged_x"&treatment22!="x_x_insecticide"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment22))+
-#   geom_point(aes(color=treatment22), size=5)+
-#   scale_color_manual(name="Treatment",labels=c("N10 P10 K10", "N10 P10 K10\n& Insecticide"), values=c("purple","purple"))+
-#   geom_line()+
-#   # geom_vline(xintercept = 2011,linetype="longdash")+
-#   # geom_vline(xintercept = 2013)+
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-#   xlab("Year")+
-#   ylab("Community Difference")+
-#   ggtitle("Invertebrate Removal")+
-#   ylim(min=0, max=0.8)
-# 
-# 
-# grid.arrange(BGP_ub, BGP_b, pplots, nutnet, invert)
-# #export at 1600x1000
-# 
-# 
-# 
-# #generating figure of compositional change by experiment year with all experiments included in one panel
-# 
-# theme_set(theme_bw())
-# theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=element_text(size=16),
-#              axis.title.y=element_text(size=20, angle=90, vjust=0.5), axis.text.y=element_text(size=16),
-#              plot.title = element_text(size=24, vjust=2),
-#              panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
-#              legend.title=element_text(size=20), legend.text=element_text(size=20))
-# 
-# #experiment year information
-# experimentYear <- read.csv('experiment years.csv')%>%
-#   mutate(calendar_year2=calendar_year)
-# 
-# compChangeTime <- compChange%>%
-#   filter(project_name!='ChANGE'&project_name!='ghost fire')%>%
-#   merge(experimentYear, by=c('project_name', 'calendar_year2'))
-# 
-# #cumulative comp change
-# compChangeTimeSubset <- compChangeTime%>%
-#   filter(treatment=='b_u_n'|treatment=='u_u_n'|treatment=='N2P0'|treatment=='N'|treatment=='NPK_x_x')
-# 
-# ggplot(data=subset(compChangeTimeSubset,experiment_year>0&comparison=='cumulative'), aes(x=experiment_year, y=composition_change, color=project_name)) +
-#   geom_point(size=5) +
-#   geom_line(aes(group=interaction(project_name,treatment))) +
-#   xlab('Experiment Year') +
-#   ylab('Cumulative Community Change') +
-#   scale_color_discrete(name='Experiment') +
-#   # ylim(0,0.8) +
-#   xlim(0,30)
-# #export at 1000x800
-# 
-# #comp diff
-# compDiffTime <- compDiff%>%
-#   filter(project_name!='ChANGE'&project_name!='ghost fire')%>%
-#   merge(experimentYear, by=c('project_name', 'calendar_year'))
-# 
-# compDiffTimeSubset <- compDiffTime%>%
-#   filter(treatment22=='b_u_n'|treatment22=='u_u_n'|treatment22=='N2P0'|treatment22=='N'|treatment22=='NPK_x_x')
-# 
-# ggplot(data=subset(compDiffTimeSubset,experiment_year>0), aes(x=experiment_year, y=composition_diff, color=project_name)) +
-#   geom_point(size=5) +
-#   geom_line(aes(group=interaction(project_name,treatment22))) +
-#   xlab('Experiment Year') +
-#   ylab('Community Difference') +
-#   scale_color_discrete(name='Experiment') +
-#   # ylim(0,0.8) +
-#   xlim(0,30)
-# #export at 1000x800
+herbivores <- read.csv('konza_herbivore_site mean.csv')
 
+quantile(herbivores$grasshopper_abund, probs = c(0.05,0.95), na.rm=T) #grasshopper quantiles
+quantile(herbivores$small_mammal_abund, probs = c(0.05,0.95), na.rm=T) #small mammal quantiles
 
+compDiffEarly <- compDiffTime%>%
+  filter(experiment_year<7)
 
-###comparing yearly change to covariates (herbivores and weather)
+quantile(compDiffEarly$composition_diff, probs = c(0.05,0.95), na.rm=T) #composition difference quantiles
 
-theme_set(theme_bw())
-theme_update(panel.grid.major=element_blank(), panel.grid.minor=element_blank())
-
-#comparing to herbivore outbreaks
-herbivores <- read.csv('konza_herbivore_site mean.csv')%>%
+herbivoresDiff <- herbivores%>%
   rename(calendar_year=year)%>%
-  left_join(compChange)%>%
-  filter(comparison=='yearly')%>%
-  mutate(ctl=ifelse(treatment %in% c('control','b_u_c','N1P0','u_u_c','x_x_x'), 1, ifelse(treatment==0, 1, ifelse(treatment=='P C'&project_name=='GF Unburned', 1, ifelse(treatment=='A C'&project_name=='GF Burned', 1, 0)))))%>%
-  filter(ctl==0)%>%
-  filter(treatment %in% c('N2P0', 'b_u_n', 'u_u_n', 'N', 10, 'NPK_x_x', 'A U', 'P U'))
+  left_join(compDiffTime)%>%
+  mutate(pre_change=ifelse(experiment_year<7, 1, 0))%>%
+  filter(!is.na(composition_diff))
 
-ggplot(herbivores, aes(x=grasshopper_abund, y=composition_change)) +
-  geom_point(size=5) +
-  facet_wrap(~project_name) +
-  ylab('Yearly Community Change') + xlab('Grasshopper Abundance')
-#export 600x600
 
-ggplot(herbivores, aes(x=small_mammal_abund, y=composition_change)) +
+ggplot(herbivoresDiff, aes(x=grasshopper_abund, y=composition_diff, color=project_name, shape=as.factor(pre_change))) +
   geom_point(size=5) +
-  facet_wrap(~project_name) +
-  ylab('Yearly Community Change') + xlab('Small Mammal Abundance')
-#export 600x600
+  ylab('Community Difference') + xlab('Grasshopper Abundance') +
+  scale_shape_manual(values=c(3,19)) +
+  geom_hline(yintercept=0.1201888, linetype='dashed') + #5th quantile composition difference
+  geom_hline(yintercept=0.5230664, linetype='dashed') + #95th quantile composition difference
+  geom_vline(xintercept=51.29563, linetype='dashed') + #5th quantile grasshopper abundance
+  geom_vline(xintercept=76.40751, linetype='dashed') #95th quantile grasshopper abundance
+#export 1200x800
+
+ggplot(herbivoresDiff, aes(x=small_mammal_abund, y=composition_diff, color=project_name, shape=as.factor(pre_change))) +
+  geom_point(size=5) +
+  ylab('Community Difference') + xlab('Small Mammal Abundance') +
+  scale_shape_manual(values=c(3,19)) +
+  geom_hline(yintercept=0.1201888, linetype='dashed') + #5th quantile composition difference
+  geom_hline(yintercept=0.5230664, linetype='dashed') + #95th quantile composition difference
+  geom_vline(xintercept=9.0500, linetype='dashed') + #5th quantile small mammal abundance
+  geom_vline(xintercept=50.8375, linetype='dashed') #95th quantile small mammal abundance
+#export 1200x800
 
 
 #comparing to weather data
-precip<-read.csv("WETDRY.csv")%>%
+precip <- read.csv("WETDRY.csv")
+
+quantile(precip$AnnualPrecip, probs = c(0.05,0.95), na.rm=T) #annual precp quantiles
+quantile(precip$AprSeptPrecip, probs = c(0.05,0.95), na.rm=T) #growing season precip quantiles
+
+precipDiff <- precip%>%
   rename(calendar_year=YEAR)%>%
   select(calendar_year, AprSeptPrecip, AnnualPrecip)%>%
-  left_join(compChange)%>%
-  filter(comparison=='yearly')%>%
-  mutate(ctl=ifelse(treatment %in% c('control','b_u_c','N1P0','u_u_c','x_x_x'), 1, ifelse(treatment==0, 1, ifelse(treatment=='P C'&project_name=='GF Unburned', 1, ifelse(treatment=='A C'&project_name=='GF Burned', 1, 0)))))%>%
-  filter(ctl==0)%>%
-  filter(treatment %in% c('N2P0', 'b_u_n', 'u_u_n', 'N', 10, 'NPK_x_x', 'A U', 'P U'))
+  left_join(compDiffTime)%>%
+  filter(!is.na(composition_diff))%>%
+  mutate(pre_change=ifelse(experiment_year<7, 1, 0))
 
-ggplot(precip, aes(x=AnnualPrecip, y=composition_change)) +
+
+ggplot(precipDiff, aes(x=AnnualPrecip, y=composition_diff, color=project_name, shape=as.factor(pre_change))) +
   geom_point(size=5) +
-  facet_wrap(~project_name) +
-  ylab('Yearly Community Change') + xlab('Annual Precipitation (mm)')
-#export 1000x800
+  ylab('Community Difference') + xlab('Annual Precipitation (mm)') +
+  scale_shape_manual(values=c(3,19)) +
+  geom_hline(yintercept=0.1201888, linetype='dashed') + #5th quantile composition difference
+  geom_hline(yintercept=0.5230664, linetype='dashed') + #95th quantile composition difference
+  geom_vline(xintercept=596.50, linetype='dashed') + #5th quantile annual precip
+  geom_vline(xintercept=1094.15, linetype='dashed') #95th quantile annual precip
+#export 1200x800
 
-ggplot(precip, aes(x=AprSeptPrecip, y=composition_change)) +
+ggplot(precipDiff, aes(x=AprSeptPrecip, y=composition_diff, color=project_name, shape=as.factor(pre_change))) +
   geom_point(size=5) +
-  facet_wrap(~project_name) +
-  ylab('Yearly Community Change') + xlab('Apr-Sep Precipitation (mm)')
-#export 1000x800
-
-
-
-
-# ###comparing difference to covariates (herbivores, weather)
-# 
-# herbivoresDiff <- read.csv('konza_herbivore_site mean.csv')%>%
-#   rename(calendar_year=year)%>%
-#   left_join(compDiff)%>%
-#   filter(treatment22=='b_u_n'|treatment22=='u_u_n'|treatment22=='N2P0'|treatment22=='N'|treatment22=='NPK_x_x')
-# 
-# ggplot(herbivoresDiff, aes(x=grasshopper_abund, y=composition_diff)) +
-#   geom_point(size=5) +
-#   facet_wrap(~project_name) +
-#   ylab('Community Difference') + xlab('Grasshopper Abundance')
-# #export 1000x800
-# 
-# ggplot(herbivoresDiff, aes(x=small_mammal_abund, y=composition_diff)) +
-#   geom_point(size=5) +
-#   facet_wrap(~project_name) +
-#   ylab('Community Difference') + xlab('Small Mammal Abundance')
-# #export 1000x800
-# 
-# 
-# #comparing to weather data
-# precipDiff <- read.csv("WETDRY.csv")%>%
-#   rename(calendar_year=YEAR)%>%
-#   select(calendar_year, AprSeptPrecip, AnnualPrecip)%>%
-#   left_join(compDiff)%>%
-#   filter(treatment22=='b_u_n'|treatment22=='u_u_n'|treatment22=='N2P0'|treatment22=='N'|treatment22=='NPK_x_x')
-# 
-# ggplot(precipDiff, aes(x=AnnualPrecip, y=composition_diff)) +
-#   geom_point(size=5) +
-#   facet_wrap(~project_name) +
-#   ylab('Community Difference') + xlab('Annual Precipitation (mm)')
-# #export 1000x800
-# 
-# ggplot(precipDiff, aes(x=AprSeptPrecip, y=composition_diff)) +
-#   geom_point(size=5) +
-#   facet_wrap(~project_name) +
-#   ylab('Community Difference') + xlab('Apr-Sep Precipitation (mm)')
-# #export 1000x800
-
-
-#velocity of change
-compChangeYearly <- compChange%>%
-  filter(comparison=='yearly')
-firstYear <- compChange%>%
-  group_by(project_name, treatment)%>%
-  summarise(min_year=min(calendar_year))%>%
-  ungroup()
-
-maxChange <- compChange%>%
-  filter(comparison=='yearly')%>%
-  mutate(ctl=ifelse(treatment %in% c('control','b_u_c','N1P0','u_u_c','x_x_x'), 1, ifelse(treatment==0, 1, ifelse(treatment=='P C'&project_name=='GF Unburned', 1, ifelse(treatment=='A C'&project_name=='GF Burned', 1, 0)))))%>%
-  filter(ctl==0, composition_change!='NA')%>%
-  # filter(treatment %in% c('N2P0', 'b_u_n', 'u_u_n', 'N', 10, 'NPK_x_x', 'A U', 'P U'))%>%
-  group_by(project_name, treatment)%>%
-  summarise(max_change=max(composition_change))%>%
-  ungroup()%>%
-  mutate(composition_change=max_change)%>%
-  left_join(compChangeYearly)%>%
-  left_join(firstYear)%>%
-  mutate(change_velocity=max_change/(calendar_year2-min_year))
-
-
-# red= n only
-# blue=p only
-# purple=n+p
-# other trt=black
-
-maxChange$treatment <- factor(maxChange$treatment, levels=c('2.5','5','7.5','10','15','20','30','A U','P U','N','b_u_n','u_u_n','N2P0',
-                                                          'P','b_u_p','u_u_p','N1P1','N1P2','N1P3',
-                                                          'b_u_n+p','u_u_n+p','N2P1','N2P2','N2P3','NP',
-                                                          'A C','A S','P C', 'P S', 'K','NPK','NPK_caged_insecticide','NPK_caged_x','NPK_x_insecticide','NPK_x_x','x_caged_insecticide','x_caged_x','x_x_insecticide','PK','NK'))
-
-ggplot(data=maxChange, aes(x=project_name, y=change_velocity, color=treatment)) + 
-  geom_point(size=5) +
-  scale_color_manual(name="Treatment", 
-                     breaks=c('2.5','5','7.5','10','15','20','30','A U','P U','N','b_u_n','u_u_n','N2P0',
-                              'P','b_u_p','u_u_p','N1P1','N1P2','N1P3',
-                              'b_u_n+p','u_u_n+p','N2P1','N2P2','N2P3','NP',
-                              'A C','A S','P C', 'P S', 'K','NPK','NPK_caged_insecticide','NPK_caged_x','NPK_x_insecticide','NPK_x_x','x_caged_insecticide','x_caged_x','x_x_insecticide','PK','NK'),
-                     values=c('red','red','red','red','red','red','red','red','red','red','red','red','red',
-                              'blue','blue','blue','blue','blue','blue',
-                              'purple','purple','purple','purple','purple','purple',
-                              'black','black','black','black','black','black','black','black','black','black','black','black','black','black','black')) +
-  xlab('Experiment') + ylab('Velocity of Composition Change')
-#export at 1000x600
-
-
+  ylab('Community Difference') + xlab('Apr-Sep Precipitation (mm)') +
+  scale_shape_manual(values=c(3,19)) +
+  geom_hline(yintercept=0.1201888, linetype='dashed') + #5th quantile composition difference
+  geom_hline(yintercept=0.5230664, linetype='dashed') + #95th quantile composition difference
+  geom_vline(xintercept=400.650, linetype='dashed') + #5th quantile growing season precip
+  geom_vline(xintercept=861.175, linetype='dashed') #95th quantile growing season precip
+#export 1200x800
