@@ -245,7 +245,7 @@ compDiffTime <- compDiff%>%
 
 #comp difference across all experiments
 compDiffTimeSubset <- compDiffTime%>%
-  filter(treatment2 %in% c('b_u_n','u_u_n','N2P0','N','NPK_x_x','A U','P U'))
+  filter(treatment2 %in% c('b_u_n','u_u_n','N2P0','N','NPK_x_x','A U','P U', '10'))
 
 ggplot(data=subset(compDiffTimeSubset,experiment_year>0), aes(x=experiment_year, y=composition_diff, color=project_name)) +
   geom_point(size=5) +
@@ -255,8 +255,22 @@ ggplot(data=subset(compDiffTimeSubset,experiment_year>0), aes(x=experiment_year,
   scale_color_discrete(name='Experiment') +
   # ylim(0,0.8) +
   xlim(0,30)
-#export at 1000x800
+#export at 1200x800
 
+
+#calculating change in difference from year x to x-1 for each experiment
+compDiffChange <- compDiffTime%>%
+  group_by(project_name, treatment2)%>%
+  mutate(comp_diff_change=(composition_diff-lag(composition_diff, order_by=experiment_year)))%>%
+  ungroup()%>%
+  mutate(burn_regime=ifelse(project_name %in% c('BGP burned', 'ChANGE', 'GF Burned'), 'annual', ifelse(project_name %in% c('BGP unburned', 'GF Unburned'), 'unburned', 'two-year')))
+
+
+#burn effect
+ggplot(data=subset(compDiffChange, experiment_year<7), aes(x=burn_regime, y=comp_diff_change, fill=as.factor(burned))) +
+  geom_boxplot() +
+  ylab('Yearly Change in Compositional Difference') + xlab('Burn Regime')
+#export at 800x800
 
 
 ###comparing difference to covariates (herbivores, weather)
@@ -266,34 +280,34 @@ herbivores <- read.csv('konza_herbivore_site mean.csv')
 quantile(herbivores$grasshopper_abund, probs = c(0.05,0.95), na.rm=T) #grasshopper quantiles
 quantile(herbivores$small_mammal_abund, probs = c(0.05,0.95), na.rm=T) #small mammal quantiles
 
-compDiffEarly <- compDiffTime%>%
+compDiffEarly <- compDiffChange%>%
   filter(experiment_year<7)
 
-quantile(compDiffEarly$composition_diff, probs = c(0.05,0.95), na.rm=T) #composition difference quantiles
+quantile(compDiffEarly$comp_diff_change, probs = c(0.05,0.95), na.rm=T) #composition difference quantiles
 
 herbivoresDiff <- herbivores%>%
   rename(calendar_year=year)%>%
-  left_join(compDiffTime)%>%
+  left_join(compDiffChange)%>%
   mutate(pre_change=ifelse(experiment_year<7, 1, 0))%>%
-  filter(!is.na(composition_diff))
+  filter(!is.na(comp_diff_change))
 
 
-ggplot(herbivoresDiff, aes(x=grasshopper_abund, y=composition_diff, color=project_name, shape=as.factor(pre_change))) +
+ggplot(herbivoresDiff, aes(x=grasshopper_abund, y=comp_diff_change, color=project_name, shape=as.factor(pre_change))) +
   geom_point(size=5) +
-  ylab('Community Difference') + xlab('Grasshopper Abundance') +
+  ylab('Yearly Change in Compositional Difference') + xlab('Grasshopper Abundance') +
   scale_shape_manual(values=c(3,19)) +
-  geom_hline(yintercept=0.1201888, linetype='dashed') + #5th quantile composition difference
-  geom_hline(yintercept=0.5230664, linetype='dashed') + #95th quantile composition difference
+  geom_hline(yintercept=-0.08462066, linetype='dashed') + #5th quantile composition difference
+  geom_hline(yintercept=0.19948423, linetype='dashed') + #95th quantile composition difference
   geom_vline(xintercept=51.29563, linetype='dashed') + #5th quantile grasshopper abundance
   geom_vline(xintercept=76.40751, linetype='dashed') #95th quantile grasshopper abundance
 #export 1200x800
 
-ggplot(herbivoresDiff, aes(x=small_mammal_abund, y=composition_diff, color=project_name, shape=as.factor(pre_change))) +
+ggplot(herbivoresDiff, aes(x=small_mammal_abund, y=comp_diff_change, color=project_name, shape=as.factor(pre_change))) +
   geom_point(size=5) +
-  ylab('Community Difference') + xlab('Small Mammal Abundance') +
+  ylab('Yearly Change in Compositional Difference') + xlab('Small Mammal Abundance') +
   scale_shape_manual(values=c(3,19)) +
-  geom_hline(yintercept=0.1201888, linetype='dashed') + #5th quantile composition difference
-  geom_hline(yintercept=0.5230664, linetype='dashed') + #95th quantile composition difference
+  geom_hline(yintercept=-0.08462066, linetype='dashed') + #5th quantile composition difference
+  geom_hline(yintercept=0.19948423, linetype='dashed') + #95th quantile composition difference
   geom_vline(xintercept=9.0500, linetype='dashed') + #5th quantile small mammal abundance
   geom_vline(xintercept=50.8375, linetype='dashed') #95th quantile small mammal abundance
 #export 1200x800
@@ -308,27 +322,27 @@ quantile(precip$AprSeptPrecip, probs = c(0.05,0.95), na.rm=T) #growing season pr
 precipDiff <- precip%>%
   rename(calendar_year=YEAR)%>%
   select(calendar_year, AprSeptPrecip, AnnualPrecip)%>%
-  left_join(compDiffTime)%>%
-  filter(!is.na(composition_diff))%>%
+  left_join(compDiffChange)%>%
+  filter(!is.na(comp_diff_change))%>%
   mutate(pre_change=ifelse(experiment_year<7, 1, 0))
 
 
-ggplot(precipDiff, aes(x=AnnualPrecip, y=composition_diff, color=project_name, shape=as.factor(pre_change))) +
+ggplot(precipDiff, aes(x=AnnualPrecip, y=comp_diff_change, color=project_name, shape=as.factor(pre_change))) +
   geom_point(size=5) +
-  ylab('Community Difference') + xlab('Annual Precipitation (mm)') +
+  ylab('Yearly Change in Compositional Difference') + xlab('Annual Precipitation (mm)') +
   scale_shape_manual(values=c(3,19)) +
-  geom_hline(yintercept=0.1201888, linetype='dashed') + #5th quantile composition difference
-  geom_hline(yintercept=0.5230664, linetype='dashed') + #95th quantile composition difference
+  geom_hline(yintercept=-0.08462066, linetype='dashed') + #5th quantile composition difference
+  geom_hline(yintercept=0.19948423, linetype='dashed') + #95th quantile composition difference
   geom_vline(xintercept=596.50, linetype='dashed') + #5th quantile annual precip
   geom_vline(xintercept=1094.15, linetype='dashed') #95th quantile annual precip
 #export 1200x800
 
-ggplot(precipDiff, aes(x=AprSeptPrecip, y=composition_diff, color=project_name, shape=as.factor(pre_change))) +
+ggplot(precipDiff, aes(x=AprSeptPrecip, y=comp_diff_change, color=project_name, shape=as.factor(pre_change))) +
   geom_point(size=5) +
-  ylab('Community Difference') + xlab('Apr-Sep Precipitation (mm)') +
+  ylab('Yearly Change in Compositional Difference') + xlab('Growing Season Precipitation (mm)') +
   scale_shape_manual(values=c(3,19)) +
-  geom_hline(yintercept=0.1201888, linetype='dashed') + #5th quantile composition difference
-  geom_hline(yintercept=0.5230664, linetype='dashed') + #95th quantile composition difference
+  geom_hline(yintercept=-0.08462066, linetype='dashed') + #5th quantile composition difference
+  geom_hline(yintercept=0.19948423, linetype='dashed') + #95th quantile composition difference
   geom_vline(xintercept=400.650, linetype='dashed') + #5th quantile growing season precip
   geom_vline(xintercept=861.175, linetype='dashed') #95th quantile growing season precip
 #export 1200x800
