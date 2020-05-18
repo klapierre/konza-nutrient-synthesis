@@ -119,6 +119,8 @@ for(i in 1:length(proj$project_name)) {
   compDiff=rbind(diff, compDiff)  
 }
 
+# write.csv(compDiff, 'Konza_nutrient synthesis_comp difference_05182020.csv')
+
 
 ##figures
 
@@ -268,6 +270,7 @@ compDiffChange <- compDiffTime%>%
   ungroup()%>%
   mutate(burn_regime=ifelse(project_name %in% c('BGP burned', 'ChANGE', 'GF Burned'), 'annual', ifelse(project_name %in% c('BGP unburned', 'GF Unburned'), 'unburned', 'two-year')))
 
+# write.csv(compDiffChange, 'Konza_nutrient synthesis_change in yearly diff_05182020.csv')
 
 #burn effect
 ggplot(data=subset(compDiffChange, experiment_year<7), aes(x=burn_regime, y=comp_diff_change, fill=as.factor(burned))) +
