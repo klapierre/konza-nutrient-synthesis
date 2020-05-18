@@ -5,14 +5,17 @@ library(grid)
 library(codyn)
 library(tidyverse)
 
-#meghan's:
-setwd("~/Dropbox/Konza Nutrient Synthesis")
 
 #kim's laptop:
 setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\Threshold project\\data\\2018 analysis')
 
 #kim's desktop:
 setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\Threshold project\\data\\2018 analysis')
+
+#meghan's:
+setwd("~/Dropbox/Konza Nutrient Synthesis")
+
+
 
 theme_set(theme_bw())
 theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=element_text(size=16),
