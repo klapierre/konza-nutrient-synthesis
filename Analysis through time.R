@@ -15,6 +15,34 @@ setwd('C:\\Users\\Kim\\Dropbox\\konza projects\\Konza Nutrient Synthesis')
 setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\Threshold project\\data')
 
 
+theme_set(theme_bw())
+theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=element_text(size=16),
+             axis.title.y=element_text(size=20, angle=90, vjust=0.5), axis.text.y=element_text(size=16),
+             plot.title = element_text(size=24, vjust=2),
+             panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
+             legend.title=element_blank(), legend.text=element_text(size=20))
+
+###bar graph summary statistics function
+#barGraphStats(data=, variable="", byFactorNames=c(""))
+
+barGraphStats <- function(data, variable, byFactorNames) {
+  count <- length(byFactorNames)
+  N <- aggregate(data[[variable]], data[byFactorNames], FUN=length)
+  names(N)[1:count] <- byFactorNames
+  names(N) <- sub("^x$", "N", names(N))
+  mean <- aggregate(data[[variable]], data[byFactorNames], FUN=mean)
+  names(mean)[1:count] <- byFactorNames
+  names(mean) <- sub("^x$", "mean", names(mean))
+  sd <- aggregate(data[[variable]], data[byFactorNames], FUN=sd)
+  names(sd)[1:count] <- byFactorNames
+  names(sd) <- sub("^x$", "sd", names(sd))
+  preSummaryStats <- merge(N, mean, by=byFactorNames)
+  finalSummaryStats <- merge(preSummaryStats, sd, by=byFactorNames)
+  finalSummaryStats$se <- finalSummaryStats$sd / sqrt(finalSummaryStats$N)
+  return(finalSummaryStats)
+}
+
+
 
 ###data
 #community data
@@ -22,7 +50,14 @@ community<-read.csv("Konza_nutrient synthesis_spp comp.csv")%>%
   #create a replicate variable unique to each experiment
   mutate(replicate=paste(project_name, treatment, plot_id, sep='::'))%>%
   #filter out 0s
-  filter(abundance>0)
+  filter(abundance>0)%>%
+  mutate(treatment=as.character(as.factor(treatment)))%>%
+  #rename control treatments for consistency across experiments
+  mutate(treatment2=ifelse(treatment=="N1P0"|treatment=="b_u_c"|treatment==0|treatment=="control"|treatment=="control_control"|treatment=="u_u_c", 'control', treatment))%>%
+  select(-treatment)%>%
+  mutate(treatment=treatment2)%>%
+  #create project_trt column
+  mutate(project_trt=paste(project_name, treatment, sep='::'))
   # #drop ChANGE, ghost fire, and Ukulinga data because time series too short
   # #drop restoration plots because planted communities
   # filter(!(project_name %in% c('ukulinga annual', 'ukulinga four', 'ukulinga unburned', 'restoration', 'ChANGE', 'ghost fire')))
@@ -45,6 +80,9 @@ precip<-read.csv("WETDRY.csv")%>%
 #RAC change
 RACchange <- RAC_change(community, time.var='calendar_year', species.var='genus_species', abundance.var='abundance', replicate.var='replicate')%>%
   left_join(plots)
+
+#multivariate change
+multivariateChange <- multivariate_change(community, time.var='calendar_year', species.var='genus_species', abundance.var='abundance', replicate.var='replicate', treatment.var=)
 
 
 
