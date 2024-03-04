@@ -1,14 +1,13 @@
 library(tidyverse)
 
 ###setting working directories----------
-setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\data') #kim's laptop
+setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\data') #kim's
 setwd("~/Dropbox/Konza Nutrient Synthesis") #meghan's
 
 
 ###functions----------
 #not in function
 `%notin%` <- Negate(`%in%`)
-
 
 
 ###plant species composition data----------
@@ -25,26 +24,31 @@ bgp_trt <- read.csv("treatments\\belowground_plots_anpp_1989-2015.csv")%>%
          treatment=ifelse(treat_other_name %in% c('u_u_c','b_u_c'), 'control', treat_other_name))%>%
   select(project_name,plot_id,treatment)%>%
   unique()
+
 change_trt <- read.csv("treatments\\ChANGE_treatments.csv")%>%
   mutate(plot_id=plot, treatment=ifelse(N==0, 'control', as.factor(N)), 
          project_name='ChANGE')%>%
   select(project_name,plot_id, treatment)
+
 nutnet_trt <- read.csv('treatments\\KNZ_NutNet_trt.csv')%>%
   mutate(project_name='nutnet')%>%
   rename(treatment=treat_other_name, plot_id=plot)%>%
   select(project_name, plot_id, treatment)
+
 invert_trt <- read.csv('treatments\\invert_trt.csv')%>%
   mutate(project_name='invert',
          treat_other_name=paste(NPK,insecticide,exclose,sep='_'))%>%
   rename(plot_id=plot)%>%
   mutate(treatment=ifelse(treat_other_name=='x_x_x', 'control', treat_other_name))%>%
   select(project_name, plot_id, treatment)
+
 ghostfire_trt <- read.csv('treatments\\ghost fire_trt.csv')%>%
   mutate(project_name=ifelse(Burn.Trt=='Annual', 'GF Burned', 'GF Unburned'), 
          plot_id=Plot,
          treat_other_name=paste(Litter,Nutrient, sep='_'),
          treatment=ifelse(treat_other_name=='A_C'&project_name=='GF Burned', 'control', ifelse(treat_other_name=='P_C'&project_name=='GF Unburned', 'control', treat_other_name)))%>%
   select(project_name,plot_id, treatment)
+
 ukulinga_trt <- read.csv('treatments\\ukulinga_trt.csv')%>%
   mutate(project_name=ifelse(site=='1D', 'ukulinga_annual', ifelse(site=='4F', 'ukulinga_four', 'ukulinga_unburned')),
          treatment=ifelse(fert==1, 'control', 'N'))
@@ -89,7 +93,8 @@ sp_bgp <- read.csv("species_comp\\BGPVC_belowgroundPlots.csv")%>%
   filter(calendar_year<2017) #remove data after cessation of treatmetns
 
 sp_ghostfire <- read.csv("species_comp\\GFE011_ghostFire.csv")%>%
-  mutate(plot_id=paste(Block,Plot,sep=''))%>%
+  mutate(plot_id=paste(Block,Plot,sep=''),
+         project_name=ifelse(BurnTrt=='Annual', 'GF Burned', 'GF Unburned'))%>%
   rename(code=Spnum, calendar_year=RecYear)%>%
   left_join(spp)%>%
   left_join(ghostfire_trt)%>%
@@ -157,7 +162,7 @@ relCov <- sp_all%>%
   left_join(totCov)%>%
   mutate(abundance=cov/tot_cover)
 
-# write.csv(relCov, 'Konza_nutrient synthesis_spp comp_05282020.csv', row.names=F)
+# write.csv(relCov, 'Konza_nutrient synthesis_spp comp_20240304.csv', row.names=F)
 
 
 
@@ -212,23 +217,23 @@ mammal_early <- read.csv('drivers\\CSM01_small mammals_1981-2013.csv')%>%
   ungroup()%>%
   rename(calendar_year=RECYEAR)
   
-mammal_late <- read.csv('drivers\\CSM08_small mammals_2016-2019.csv')%>%
-  filter(Treatment %in% c('1D','4B','4F','20B'))%>%  #drop watersheds not in our experimental framework (e.g., grazed)
-  filter(Recapture.Status..Y.N.=='N')%>% #filter out recaptures
-  group_by(Year, Treatment, Transect)%>%
+mammal_late <- read.csv('drivers\\CSM08_small mammals_2016-2021.csv')%>%
+  filter(Watershed %in% c('1D','4B','4F','20B'))%>%  #drop watersheds not in our experimental framework (e.g., grazed)
+  filter(RecaptureStatus=='N')%>% #filter out recaptures
+  group_by(RecYear, Watershed, Transect)%>%
   summarise(trans_count=length(Species))%>% #sum across four sampling dates
   ungroup()%>%
-  group_by(Year, Treatment)%>%
+  group_by(RecYear, Watershed)%>%
   summarise(ws_count=mean(trans_count))%>% #mean across transects within watershed
   ungroup()%>%
-  mutate(burn=ifelse(Treatment %in% c('1D'), 'annual', ifelse(Treatment %in% c('4B','4F'), 'four', 'twenty')))%>%
-  group_by(Year, burn)%>%
+  mutate(burn=ifelse(Watershed %in% c('1D'), 'annual', ifelse(Watershed %in% c('4B','4F'), 'four', 'twenty')))%>%
+  group_by(RecYear, burn)%>%
   summarise(burn_count=mean(ws_count))%>% #mean by burn treatment
   ungroup()%>%
-  group_by(Year)%>%
+  group_by(RecYear)%>%
   summarise(mammal=mean(burn_count))%>% #mean across all burn types
   ungroup()%>%
-  rename(calendar_year=Year)
+  rename(calendar_year=RecYear)
 
 mammal <- mammal_early%>%
   rbind(mammal_late)
@@ -239,7 +244,9 @@ mammal <- mammal_early%>%
 
 #weather
 precip <- read.csv('drivers\\AWE012_weather.csv')%>%
-  mutate(month=paste('a',RECMONTH, sep=''))%>%
+  filter(DPPT!='.') %>%
+  mutate(month=paste('a',RECMONTH, sep=''),
+         DPPT=as.integer(DPPT))%>%
   group_by(RECYEAR, month)%>%
   summarise(precip=sum(DPPT))%>%
   ungroup()%>%
@@ -250,15 +257,19 @@ precip <- read.csv('drivers\\AWE012_weather.csv')%>%
   select(calendar_year, grow_precip, year_precip)
 
 growTemp <- read.csv('drivers\\AWE012_weather.csv')%>%
+  filter(TAVE!='.', TAVE>-30) %>% 
   mutate(temp=as.numeric(TAVE))%>%
   filter(RECMONTH %in% c(5,6,7,8))%>%
   group_by(RECYEAR)%>%
-  summarise(grow_temp=mean(TAVE))%>%
+  summarise(grow_temp=mean(temp))%>%
   ungroup()%>%
   rename(calendar_year=RECYEAR)
+
 yearTemp <- read.csv('drivers\\AWE012_weather.csv')%>%
+  filter(TAVE!='.', TAVE>-30) %>% 
+  mutate(temp=as.numeric(TAVE))%>%
   group_by(RECYEAR)%>%
-  summarise(year_temp=mean(TAVE))%>%
+  summarise(year_temp=mean(temp))%>%
   ungroup()%>%
   rename(calendar_year=RECYEAR)
 
@@ -269,4 +280,4 @@ drivers <- precip%>%
   full_join(grasshopper)%>%
   full_join(mammal)
 
-# write.csv(drivers, 'Konza_nutrient synthesis_drivers_05292020.csv', row.names=F)
+# write.csv(drivers, 'Konza_nutrient synthesis_drivers_20240304.csv', row.names=F)
