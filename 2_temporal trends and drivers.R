@@ -3,25 +3,23 @@ library(gridExtra)
 library(doBy)
 library(grid)
 library(codyn)
+library(ggthemes)
 library(tidyverse)
 
 
 #kim's laptop:
-setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\Threshold project\\data\\2018 analysis')
-
-#kim's desktop:
-setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\Threshold project\\data\\2018 analysis')
+setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\data')
 
 #meghan's:
 setwd("~/Dropbox/Konza Nutrient Synthesis")
 
 
 theme_set(theme_bw())
-theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=element_text(size=16),
-             axis.title.y=element_text(size=20, angle=90, vjust=0.5), axis.text.y=element_text(size=16),
+theme_update(axis.title.x=element_text(size=30, vjust=-0.35), axis.text.x=element_text(size=25),
+             axis.title.y=element_text(size=30, angle=90, vjust=0.5), axis.text.y=element_text(size=25),
              plot.title = element_text(size=24, vjust=2),
              panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
-             legend.title=element_blank(), legend.text=element_text(size=20))
+             legend.title=element_blank(), legend.text=element_text(size=25))
 
 ###bar graph summary statistics function
 #barGraphStats(data=, variable="", byFactorNames=c(""))
@@ -56,35 +54,26 @@ theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=elemen
 
 ###data
 #community data
-community<-read.csv("Konza_nutrient synthesis_spp comp_04142020.csv")%>%
+community<-read.csv("Konza_nutrient synthesis_spp comp_20240304.csv")%>%
   #consistently name control plots
   mutate(treatment2=ifelse(treatment %in% c('x_x_x', 'u_u_c', 'control', 'N1P0', 'b_u_c', '0'), 'control', ifelse(treatment=='A C'&project_name=='GF Burned', 'control', ifelse(treatment=='P C'&project_name=='GF Unburned', 'control', as.character(treatment)))))%>%
   select(-treatment)%>%
   rename(treatment=treatment2)%>%
   #create a replicate variable unique to each experiment
   mutate(replicate=paste(project_name, treatment, plot_id, sep='::'))%>%
-  mutate(project_trt=paste(project_name, treatment, sep='::'))%>%
   #filter out 0s
   filter(abundance>0)%>%
-<<<<<<< HEAD
   mutate(treatment=as.character(as.factor(treatment)))%>%
-  #rename control treatments for consistency across experiments
-  mutate(treatment2=ifelse(treatment=="N1P0"|treatment=="b_u_c"|treatment==0|treatment=="control"|treatment=="control_control"|treatment=="u_u_c", 'control', treatment))%>%
-  select(-treatment)%>%
-  mutate(treatment=treatment2)%>%
   #create project_trt column
-  mutate(project_trt=paste(project_name, treatment, sep='::'))
-  # #drop ChANGE, ghost fire, and Ukulinga data because time series too short
-  # #drop restoration plots because planted communities
-  # filter(!(project_name %in% c('ukulinga annual', 'ukulinga four', 'ukulinga unburned', 'restoration', 'ChANGE', 'ghost fire')))
-=======
+  mutate(project_trt=paste(project_name, treatment, sep='::')) %>% 
+  # #drop Ukulinga data because time series too short and restoration plots because planted communities
+  filter(!(project_name %in% c('ukulinga annual', 'ukulinga four', 'ukulinga unburned', 'restoration'))) %>% 
   #filter out sugar addition in Ghost Fire
   filter(treatment %notin% c('A S', 'P S'))%>%
   #filter out pre-treatment data
   mutate(pretrt=ifelse(project_name=='pplots'&calendar_year==2002, 1, ifelse(project_name=='nutnet'&calendar_year==2007, 1, ifelse(project_name=='GF Burned'&calendar_year==2014, 1, ifelse(project_name=='GF Unburned'&calendar_year==2014, 1, ifelse(project_name=='ChANGE'&calendar_year==2013, 1, 0))))))%>%
   filter(pretrt==0)%>%
   select(-pretrt)
->>>>>>> f11d0d389b5b4b3d5d35c73af6f7c958a106761a
 
 #list of experiments, treatments, and plots
 plots <- community%>%
@@ -102,19 +91,12 @@ proj <- community%>%
   unique()
 
 
-
-<<<<<<< HEAD
-#multivariate change
-multivariateChange <- multivariate_change(community, time.var='calendar_year', species.var='genus_species', abundance.var='abundance', replicate.var='replicate', treatment.var=)
-
-=======
 ###calculate change metrics
 ###RAC change
 #year to year variation
 yearlyRACchange <- RAC_change(community, time.var='calendar_year', species.var='genus_species', abundance.var='abundance', replicate.var='replicate')%>%
   left_join(plots)%>%
   mutate(comparison='yearly')
->>>>>>> f11d0d389b5b4b3d5d35c73af6f7c958a106761a
 
 
 ###compositional change
@@ -168,7 +150,7 @@ for(i in 1:length(proj$project_name)) {
   compDiff=rbind(diff, compDiff)  
 }
 
-# write.csv(compDiff, 'Konza_nutrient synthesis_comp difference_05222020.csv')
+# write.csv(compDiff, 'Konza_nutrient synthesis_comp difference_20240305.csv')
 
 
 ##figures
@@ -178,7 +160,6 @@ for(i in 1:length(proj$project_name)) {
 # blue=p only
 # purple=n+p
 # black=other combo
-theme_set(theme_bw(12))
 
 pplots<-
   ggplot(data=subset(compDiff, project_name=="pplots"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
@@ -219,7 +200,7 @@ BGP_b<-
   ylim(min=0, max=0.8)
 
 nutnet<-
-  ggplot(data=subset(compDiff, project_name=="nutnet"&treatment2!="fence"&treatment2!="NPKfence"&treatment2!="K"&treatment2!="PK"&treatment2!="NK"&treatment2!="NPK"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
+  ggplot(data=subset(compDiff, project_name=="nutnet"&treatment2!="fence"&treatment2!="NPK_fence"&treatment2!="K"&treatment2!="PK"&treatment2!="NK"&treatment2!="NPK"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
   geom_point(aes(color=treatment2), size=5)+
   scale_color_manual(name="Treatment",labels=c("N10 P0 K0","N10 P10 K0","N0 P10 K0"), values=c("red", "purple","blue"))+
   geom_line()+
@@ -232,7 +213,7 @@ nutnet<-
   ylim(min=0, max=0.8)
 
 invert<-
-  ggplot(data=subset(compDiff, project_name=="invert"&treatment2!="x_caged_x"&treatment2!="x_caged_insecticide"&treatment2!="NPK_caged_insecticide"&treatment2!="NPK_caged_x"&treatment2!="x_x_insecticide"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
+  ggplot(data=subset(compDiff, project_name=="invert"&treatment2!="x_x_caged"&treatment2!="x_insect_caged"&treatment2!="NPK_insect_caged"&treatment2!="NPK_x_caged"&treatment2!="x_insect_x"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
   geom_point(aes(color=treatment2), size=5)+
   scale_color_manual(name="Treatment",labels=c("N10 P10 K10", "N10 P10 K10\n& Insecticide"), values=c("purple","black"))+
   geom_line()+
@@ -245,9 +226,9 @@ invert<-
   ylim(min=0, max=0.8)
 
 change<-
-  ggplot(data=subset(compDiff, project_name=="ChANGE"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
+  ggplot(data=subset(compDiff, project_name=="ChANGE" & treatment2 %in% c('3', '5')), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
   geom_point(aes(color=treatment2), size=5)+
-  scale_color_manual(name="Treatment",values=c("red","red","red","red","red","red","red"))+
+  scale_color_manual(name="Treatment",values=c("pink","red"))+
   geom_line()+
   # geom_vline(xintercept = 2011,linetype="longdash")+
   # geom_vline(xintercept = 2013)+
@@ -258,9 +239,9 @@ change<-
   ylim(min=0, max=0.8)
 
 GFburned<-
-  ggplot(data=subset(compDiff, project_name=="GF Burned"&treatment2 %in% c('A U','P U')), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
+  ggplot(data=subset(compDiff, project_name=="GF Burned"&treatment2 %in% c('A_U','P_U')), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
   geom_point(aes(color=treatment2), size=5)+
-  scale_color_manual(name="Treatment",labels=c('N','N + litter'), values=c("red","black"))+
+  scale_color_manual(name="Treatment",labels=c('N','N + litter'), values=c("pink","black"))+
   geom_line()+
   # geom_vline(xintercept = 2011,linetype="longdash")+
   # geom_vline(xintercept = 2013)+
@@ -271,16 +252,16 @@ GFburned<-
   ylim(min=0, max=0.8)
 
 GFunburned<-
-  ggplot(data=subset(compDiff, project_name=="GF Unburned"&treatment2 %in% c('A U','P U')), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
+  ggplot(data=subset(compDiff, project_name=="GF Unburned"&treatment2 %in% c('A_U','P_U')), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
   geom_point(aes(color=treatment2), size=5)+
-  scale_color_manual(name="Treatment",labels=c('N - litter','N'), values=c("black","red"))+
+  scale_color_manual(name="Treatment",labels=c('N - litter','N'), values=c("black","pink"))+
   geom_line()+
   # geom_vline(xintercept = 2011,linetype="longdash")+
   # geom_vline(xintercept = 2013)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   xlab("Year")+
   ylab("Community Difference")+
-  ggtitle("GF unburned")+
+  ggtitle("GF Unburned")+
   ylim(min=0, max=0.8)
 
 pushViewport(viewport(layout=grid.layout(3,3)))
@@ -306,18 +287,39 @@ compDiffTime <- compDiff%>%
 
 #comp difference across all experiments
 compDiffTimeSubset <- compDiffTime%>%
-  mutate(keep=ifelse(treatment2 %in% c('b_u_n','u_u_n','N2P0','N','NPK_x_x','10'), 1, ifelse(treatment2=='A U'&project_name=='GF Burned', 1, ifelse(treatment2=='P U'&project_name=='GF Unburned', 1, 0))))%>%
+  mutate(keep=ifelse(treatment2 %in% c('b_u_n','u_u_n','N2P0','N','NPK_x_x','10', '5'), 1, ifelse(treatment2=='A_U'&project_name=='GF Burned', 1, ifelse(treatment2=='P_U'&project_name=='GF Unburned', 1, 0))))%>%
   filter(keep==1)
 
-ggplot(data=subset(compDiffTimeSubset,experiment_year>0), aes(x=experiment_year, y=composition_diff, color=project_name)) +
+#figure by expt year
+exptYearFig <- ggplot(data=subset(compDiffTimeSubset,experiment_year>0 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=experiment_year, y=composition_diff, color=project_name)) +
+  geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
   geom_point(size=5) +
-  geom_line(aes(group=interaction(project_name,treatment2))) +
+  geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
   xlab('Experiment Year') +
-  ylab('Composition Difference') +
-  scale_color_discrete(name='Experiment') +
-  # ylim(0,0.8) +
-  xlim(0,30)
-#export at 1200x800
+  ylab('Community Difference') +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  ylim(0,0.8) +
+  scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
+  theme(legend.position='none')
+# ggsave(exptYearFig, file='C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 1b_temporalTrajectories_20240306.png', width=7.5, height=7.5, units='in', dpi=300, bg='white')
+
+#figure by calendar year
+calYearFig <- ggplot(data=subset(compDiffTimeSubset,experiment_year>0 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=calendar_year, y=composition_diff, color=project_name)) +
+  geom_rect(aes(xmin = 1988, xmax = 1995, ymin = -Inf, ymax = Inf), fill="#f2cc3a", color=NA, alpha=0.006) + #bgp
+  geom_rect(aes(xmin = 2004.5, xmax = 2007.5, ymin = -Inf, ymax = Inf), fill="#db4c23", color=NA, alpha=0.006) + #pplots
+  geom_rect(aes(xmin = 2010.5, xmax = 2012.5, ymin = -Inf, ymax = Inf), fill="#54c4b7", color=NA, alpha=0.006) + #nutnet
+  geom_rect(aes(xmin = 2011.5, xmax = 2013.5, ymin = -Inf, ymax = Inf), fill="#39869e", color=NA, alpha=0.006) + #invert
+  geom_point(size=5) +
+  geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
+  xlab('Calendar Year') +
+  ylab('Community Difference') +
+  scale_color_manual(name='Experiment',
+                     values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), 
+                     labels=c("BGP Burned", 'BGP Unburned', 'ChANGE', 'Invert', 'NutNet', 'PPlots')) +
+  ylim(0,0.8) 
+# ggsave(calYearFig, file='C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 1a_temporalTrajectories_20240306.png', width=17, height=7.5, units='in', dpi=300, bg='white')
+
+
 
 
 #calculating change in difference from year x to x-1 for each experiment
@@ -327,7 +329,7 @@ compDiffChange <- compDiffTime%>%
   ungroup()%>%
   mutate(burn_regime=ifelse(project_name %in% c('BGP burned', 'ChANGE', 'GF Burned'), 'annual', ifelse(project_name %in% c('BGP unburned', 'GF Unburned'), 'unburned', 'two-year')))
 
-# write.csv(compDiffChange, 'Konza_nutrient synthesis_change in yearly diff_05222020.csv')
+# write.csv(compDiffChange, 'Konza_nutrient synthesis_change in yearly diff_20240306.csv')
 
 #burn effect
 ggplot(data=subset(compDiffChange, experiment_year<7), aes(x=burn_regime, y=comp_diff_change, fill=as.factor(burned))) +
