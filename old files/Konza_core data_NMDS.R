@@ -1,7 +1,5 @@
-library(tidyr)
-library(dplyr)
 library(vegan)
-library(ggplot2)
+library(tidyverse)
 
 theme_set(theme_bw())
 theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=element_text(size=16),
@@ -29,7 +27,7 @@ barGraphStats <- function(data, variable, byFactorNames) {
   return(finalSummaryStats)
 }  
 
-setwd('C:\\Users\\Kim\\Dropbox\\konza projects\\Konza Nutrient Synthesis')
+setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis')
 
 #get data
 core <- read.csv('Konza_core data_spp comp_PVC021.csv')
