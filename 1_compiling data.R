@@ -1,20 +1,30 @@
+################################################################################
+##  1_compiling data.R: Gathering community and abundance data across experiments
+##  and Konza long-term observational records.
+##
+##  Authors: Kimberly Komatsu, Meghan Avolio
+################################################################################
+
+##### Workspace Set-Up #####
+
 library(tidyverse)
 
-###setting working directories----------
+### Setting working directories
 setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\data') #kim's
 setwd("~/Dropbox/Konza Nutrient Synthesis") #meghan's
 
-
-###functions----------
+### Functions
 #not in function
 `%notin%` <- Negate(`%in%`)
 
 
-###plant species composition data----------
-##konza spp lists
+
+##### Read in Data #####
+
+#konza spp lists
 spp <- read.csv('species_list\\PPS011_new KNZ spp list.csv')
 
-##treatments - for experiments where treatments designations are not in the species composition file
+#treatments - for experiments where treatments designations are not in the species composition file
 bgp_trt <- read.csv("treatments\\belowground_plots_anpp_1989-2015.csv")%>%
   filter(MOW!="m")%>%
   mutate(treat_other_name=paste(BURN, MOW, NUTRIENT, sep="_"),
@@ -138,9 +148,8 @@ sp_ukulinga <- read.csv('species_comp\\KNZ_ukulinga_sppComp.csv')%>%
   select(project_name, calendar_year, treatment, genus_species, abundance, plot_id)
 
 
+##### Merging Species Composition Data #####
 
-###merging species composition data----------
-#species data
 sp_all <- sp_pplots%>%
   rbind(sp_bgp)%>%
   rbind(sp_change)%>%
@@ -151,7 +160,9 @@ sp_all <- sp_pplots%>%
   filter(abundance>0)
 
 
-###calculating relative cover----------
+
+##### Calculating Relative Cover #####
+
 totCov <- sp_all%>%
   group_by(project_name, calendar_year, treatment, plot_id)%>%
   summarise(tot_cover=sum(abundance))%>%
@@ -166,7 +177,8 @@ relCov <- sp_all%>%
 
 
 
-###consumer data----------
+##### Read in Covaraite Data #####
+
 #grasshoppers
 grasshopper <- read.csv('drivers\\CGR022_grasshoppers.csv')%>%
   filter(!is.na(TOTAL), SPECIES %notin% c('Gryllidae spp.','Oecanthinae spp.','Tettigoniidae spp.','Orchelimum spp.','Neoconocephalus ensiger','Neoconocephalus robustus','Scudderia texensis'))%>% #remove non-Acrididae species, which were not counted in all years
@@ -240,7 +252,6 @@ mammal <- mammal_early%>%
 
 # ggplot(data=mammal, aes(x=calendar_year, y=mammal)) +
 #   geom_point() + geom_smooth(method='lm', se=F)
-
 
 #weather
 precip <- read.csv('drivers\\AWE012_weather.csv')%>%
