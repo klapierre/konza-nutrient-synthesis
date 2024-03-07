@@ -258,13 +258,15 @@ precip <- read.csv('drivers\\AWE012_weather.csv')%>%
   filter(DPPT!='.') %>%
   mutate(month=paste('a',RECMONTH, sep=''),
          DPPT=as.integer(DPPT))%>%
-  group_by(RECYEAR, month)%>%
+  mutate(year=ifelse(RECMONTH %in% c(9, 10, 11, 12), RECYEAR+1, RECYEAR)) %>% 
+  group_by(year, month)%>%
   summarise(precip=sum(DPPT))%>%
   ungroup()%>%
   spread(key=month, value=precip, fill=0)%>%
   mutate(grow_precip=(a5+a6+a7+a8)/10,
          year_precip=(a1+a2+a3+a4+a5+a6+a7+a8+a9+a10+a11+a12)/10)%>%
-  rename(calendar_year=RECYEAR)%>%
+  filter(year>1982, year<2024) %>% 
+  rename(calendar_year=year)%>%
   select(calendar_year, grow_precip, year_precip)
 
 growTemp <- read.csv('drivers\\AWE012_weather.csv')%>%
@@ -279,10 +281,12 @@ growTemp <- read.csv('drivers\\AWE012_weather.csv')%>%
 yearTemp <- read.csv('drivers\\AWE012_weather.csv')%>%
   filter(TAVE!='.', TAVE>-30) %>% 
   mutate(temp=as.numeric(TAVE))%>%
-  group_by(RECYEAR)%>%
+  mutate(year=ifelse(RECMONTH %in% c(9, 10, 11, 12), RECYEAR+1, RECYEAR)) %>% 
+  group_by(year)%>%
   summarise(year_temp=mean(temp))%>%
   ungroup()%>%
-  rename(calendar_year=RECYEAR)
+  filter(year>1982, year<2024)%>%
+  rename(calendar_year=year) 
 
 #combine drivers
 drivers <- precip%>%
