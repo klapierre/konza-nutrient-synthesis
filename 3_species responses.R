@@ -1,80 +1,168 @@
-library(tidyverse)
+################################################################################
+##  3_species responses.R: Identifying patterns in individual species responses
+##  through time and possible drivers.
+##
+##  Authors: Kimberly Komatsu, Meghan Avolio
+################################################################################
+
+##### Workspace Set-Up #####
+
+library(vegan)
+library(gridExtra)
+library(doBy)
+library(grid)
 library(codyn)
+library(ggthemes)
+library(tidyverse)
 
-setwd("C://Users/mavolio2/Dropbox/Konza Research/Nutrient synthesis")
+setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\data') #kim's
+setwd("~/Dropbox/Konza Nutrient Synthesis") #meghan's
 
-data<-read.csv("Konza_nutrient synthesis_spp comp_04142020.csv")
-exyrs<-read.csv("experiment years.csv")
+theme_set(theme_bw())
+theme_update(axis.title.x=element_text(size=30, vjust=-0.35), axis.text.x=element_text(size=25),
+             axis.title.y=element_text(size=30, angle=90, vjust=0.5), axis.text.y=element_text(size=25),
+             plot.title = element_text(size=30, vjust=2),
+             panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
+             legend.title=element_blank(), legend.text=element_text(size=25))
 
-theme_set(theme_bw(12))
+# bar graph summary statistics function
+#barGraphStats(data=, variable="", byFactorNames=c(""))
+barGraphStats <- function(data, variable, byFactorNames) {
+  count <- length(byFactorNames)
+  N <- aggregate(data[[variable]], data[byFactorNames], FUN=length)
+  names(N)[1:count] <- byFactorNames
+  names(N) <- sub("^x$", "N", names(N))
+  mean <- aggregate(data[[variable]], data[byFactorNames], FUN=mean)
+  names(mean)[1:count]<- byFactorNames
+  names(mean) <- sub("^x$", "mean", names(mean))
+  sd <- aggregate(data[[variable]], data[byFactorNames], FUN=sd)
+  names(sd)[1:count] <- byFactorNames
+  names(sd) <- sub("^x$", "sd", names(sd))
+  preSummaryStats <- merge(N, mean, by=byFactorNames)
+  finalSummaryStats <- merge(preSummaryStats, sd, by=byFactorNames)
+  finalSummaryStats$se <- finalSummaryStats$sd / sqrt(finalSummaryStats$N)
+  return(finalSummaryStats)
+}
 
-totabund<-data%>%
-  group_by(project_name, plot_id, calendar_year)%>%
-  summarise(tot=sum(abundance))
+#negation function
+`%notin%` <- Negate(`%in%`)
 
-relabund<-data%>%
-  left_join(totabund)%>%
-  mutate(relabund=abundance/tot)%>%
+
+##### Read in Data #####
+
+data <- read.csv("Konza_nutrient synthesis_spp comp_20240304.csv") %>% 
+  filter(genus_species %notin% c('litter', 'litter '))
+
+exyrs <- read.csv("experiment years.csv")
+
+
+##### Calculate Relative Abundances #####
+
+totAbundundance <- data %>%
+  group_by(project_name, plot_id, calendar_year) %>%
+  summarise(tot=sum(abundance)) %>% 
+  ungroup()
+
+relabund <- data %>%
+  left_join(totAbundundance) %>%
+  mutate(relabund=abundance/tot) %>%
   filter(relabund!="0")
 
-yrs<-data%>%
-  select(project_name, calendar_year)%>%
-  unique%>%
-  group_by(project_name)%>%
-  summarise(start=min(calendar_year))%>%
-  ungroup()%>%
-  select(project_name, start)%>%
-  rename(calendar_year=start)
 
-trt_CN<-data%>%
-  select(project_name, treatment)%>%
-  unique()%>%
-  mutate(trt=ifelse(treatment=="N1P0", "C", ifelse(treatment=="N2P0", "N", ifelse(treatment=="u_u_c", "C", ifelse(treatment=='u_u_n', "N", ifelse(treatment=="b_u_c", "C", ifelse(treatment=="b_u_n", "N", ifelse(treatment==0, "C", ifelse(treatment==10, "N", ifelse(treatment=="x_x_x", "C", ifelse(treatment=="NPK_x_x", "N", ifelse(treatment=="control", "C", ifelse(treatment=="N", "N", ifelse(treatment=="A C"&project_name=="GF Burned", "C", ifelse(treatment=="A U"&project_name=="GF Burned", "N", ifelse(treatment=="P C"&project_name=="GF Unburned", "C", ifelse(treatment=="P U"&project_name=="GF Unburned", "N", "ign")))))))))))))))))%>%
-  filter(trt!="ign")
+##### Determine experiment start date and number of plots #####
 
-nplots<-data%>%
-  right_join(trt_CN)%>%
-  right_join(yrs)%>%
-  filter(trt=="C")%>%
-  select(project_name, plot_id)%>%
-  unique()%>%
-  group_by(project_name)%>%
-  summarize(nplot=length(plot_id))
+yrs <- data %>%
+  select(project_name, calendar_year) %>%
+  unique %>%
+  group_by(project_name) %>%
+  summarise(start_year=min(calendar_year)) %>%
+  ungroup() %>%
+  mutate(pretreatment=ifelse(project_name %in% c('ChANGE', 'pplots', 'nutnet'), 1, 0)) %>% 
+  mutate(start_year=start_year+pretreatment) %>% 
+  select(project_name, start_year)
 
-c_domsp<-relabund%>%
-  right_join(trt_CN)%>%
-  right_join(yrs)%>%
-  filter(trt=="C")%>%
-  group_by(project_name, genus_species)%>%
-  summarize(mabund=mean(relabund), n=length(relabund))%>%
-  left_join(nplots)%>%
+nplots <- data %>%
+  mutate(treatment2=ifelse(treatment %in% c('x_x_x', 'b_u_c', 'u_u_c', 'control', 'N1P0', '0'), 'control',
+                    ifelse(treatment %in% c('NPK_x_x', 'b_u_n', 'u_u_n', 'N', 'N2P0', '5'), 'nitrogen', 'ignore'))) %>%
+  filter(treatment2=="control") %>%
+  select(project_name, plot_id) %>%
+  unique() %>%
+  group_by(project_name) %>%
+  summarize(nplot=length(plot_id)) %>% 
+  ungroup()
+
+
+##### Calculate DCi and rank #####
+
+domsp <- relabund %>%
+  mutate(treatment2=ifelse(treatment %in% c('x_x_x', 'b_u_c', 'u_u_c', 'control', 'N1P0', '0'), 'control',
+                    ifelse(treatment %in% c('NPK_x_x', 'b_u_n', 'u_u_n', 'N', 'N2P0', '5'), 'nitrogen', 'ignore'))) %>%
+  filter(treatment2!="ignore") %>% 
+  select(-treatment) %>% 
+  rename(treatment=treatment2) %>% 
+  left_join(yrs) %>% 
+  mutate(experiment_year=calendar_year-start_year+1) %>%  
+  group_by(project_name, experiment_year, treatment, genus_species) %>%
+  summarize(mabund=mean(relabund), n=length(relabund)) %>%
+  ungroup() %>% 
+  left_join(nplots) %>%
+  group_by(project_name, experiment_year, treatment) %>% 
   mutate(freq=n/nplot,
          DCi=(mabund*freq)/2,
-         rank=rank(-DCi))%>%
-  filter(rank<4)%>%
-  select(project_name, genus_species)
-#using the control plots doesn't work well b/c sometimes they are not in the N treated plots and trackign thier change through time is odd. Also most of these experiments the first year is pre-treatment
+         rank=rank(-DCi)) %>%
+  ungroup() %>% 
+  mutate(genus_species=str_to_lower(genus_species)) %>% 
+  separate(genus_species, into=c('genus', 'species1'), sep=' ') %>% 
+  separate (genus, into=c('genus2', 'species2'), sep='_') %>% 
+  mutate(species=ifelse(is.na(species2), species1, species2),
+         genus_species=paste(genus2, species, sep='_')) %>% 
+  select(-genus2, -species1, -species2, -species) %>% 
+  mutate(genus_species=ifelse(genus_species=='andropogon_scoparius', 'schizachyrium_scoparium',
+                       ifelse(genus_species=='kuhnia_eupatorioides', 'brickellia_eupatorioides',
+                       ifelse(genus_species=='carex_heliophila', 'carex_inops',
+                       ifelse(genus_species=='sporobolus_asper', 'sporobolus_compositus',
+                       ifelse(genus_species=='aster_ericoides', 'symphyotrichum_ericoides',
+                       ifelse(genus_species %in% c('aster_oblongifolia', 'aster_oblongifolius'), 'symphyotrichum_oblongifolium',
+                       ifelse(genus_species=='solidago_canadensis', 'solidago_altissima',
+                              genus_species))))))))
 
-n_domsp<-relabund%>%
-  right_join(trt_CN)%>%
-  right_join(yrs)%>%
-  filter(trt=="N")%>%
-  group_by(project_name, genus_species)%>%
-  summarize(mabund=mean(relabund), n=length(relabund))%>%
-  left_join(nplots)%>%
-  mutate(freq=n/nplot,
-         DCi=(mabund*freq)/2,
-         rank=rank(-DCi))%>%
-  filter(rank<4)%>%
-  select(project_name, genus_species)
 
-domsp_change<-relabund%>%
-  right_join(trt_CN)%>%
-  right_join(n_domsp)%>%
-  filter(trt!="C")%>%
-  group_by(project_name, genus_species, calendar_year)%>%
-  summarize(mabund=mean(relabund))%>%
-  mutate(sp=ifelse(genus_species=="androp gerar"|genus_species=="andropogon gerardii"|genus_species=="Andropogon gerardii"|genus_species=="andropogon_gerardii", "A. gerardii", ifelse(genus_species=="andropogon scoparius"|genus_species=="andropogon_scoparius"|genus_species=="schiza scopa"|genus_species=="Schizachyrium scoparius","S. scoparius", ifelse(genus_species=="artemisia ludoviciana", "A. ludoviciana", ifelse(genus_species=="bothri bladh", "B. bladhii", ifelse(genus_species=="bouteloua curtipendula", "B. curipendula", ifelse(genus_species=="Panicum virgatum", "P. virgatum", ifelse(genus_species=="poa pratensis", "P. pratensis", ifelse(genus_species=="Solidago missouriensis", "S. missouriensis", ifelse(genus_species=="sorgha nutan"|genus_species=="Sorghastrum nutans"|genus_species=="sorghastrum_nutans", "S. nutans", "na"))))))))))
+#figure
+ggplot(data=subset(domsp, experiment_year>0 & treatment=='nitrogen' &
+                          !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned')) &
+                          genus_species %in% c('ambrosia_psilostachya', 'ambrosia_artemisiifolia', 'amorpha_canescens', 'andropogon_gerardii',
+                                               'asclepias_stenophylla', 'asclepias_verticillata', 'bouteloua_curtipendula', 
+                                               'brickellia_eupatroides', 'carex_inops', 'carex_meadii', 'circium_altissimum', 'conyza_canadensis',
+                                               'dichanthelium_oligosanthes', 'eragrostis_spectabolis', 'euphorbia_nutans', 'helianthus_annuus',
+                                               'linum_sulcatum', 'oxalis_stricta', 'panicum_capillare', 'panicum_virgatum', 'physalis_pumila',
+                                               'poa_pratensis', 'ruellia_humulis', 'salvia_azurea', 'schizachyrium_scoparium', 
+                                               'silene_antirrhina', 'solidago_altissima', 'solidago_missouriensis',
+                                               'sorghastrum_nutans', 'sporobolus_compositus', 'sporobolus_heterolepis', 
+                                               'symphyotrichum_ericoides', 'symphyotrichum_oblongifolia', 'triodanis_perfoliata',
+                                               'vernonia_baldwinii')), 
+       aes(x=experiment_year, y=DCi, color=project_name)) +
+  geom_point(size=5) +
+  geom_line(linewidth=2) +
+  xlab('Experiment Year') +
+  ylab('DCi') +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  facet_wrap(~genus_species, scales='free_y') +
+  theme(legend.position='none')
+
+
+
+
+
+
+
+
+domsp_change <- relabund %>%
+  right_join(trt_CN) %>%
+  right_join(n_domsp) %>%
+  filter(trt!="C") %>%
+  group_by(project_name, genus_species, calendar_year) %>%
+  summarize(mabund=mean(relabund)) %>%
+  ungroup()
 
 ggplot(data=domsp_change, aes(x=calendar_year, y=mabund, group=sp, color=sp))+
   geom_point()+
@@ -82,64 +170,64 @@ ggplot(data=domsp_change, aes(x=calendar_year, y=mabund, group=sp, color=sp))+
   facet_wrap(~project_name, scales="free")
 
 
-N_yr7<-relabund%>%
-  right_join(trt_CN)%>%
-  right_join(exyrs)%>%
-  filter(trt=="N")%>%
-  filter(experiment_year==7)%>%
-  group_by(project_name, genus_species)%>%
-  summarize(mabund=mean(relabund), n=length(relabund))%>%
-  left_join(nplots)%>%
+N_yr7 <- relabund %>%
+  right_join(trt_CN) %>%
+  right_join(exyrs) %>%
+  filter(trt=="N") %>%
+  filter(experiment_year==7) %>%
+  group_by(project_name, genus_species) %>%
+  summarize(mabund=mean(relabund), n=length(relabund)) %>%
+  left_join(nplots) %>%
   mutate(freq=n/nplot,
          DCi=(mabund*freq)/2,
-         rank=rank(-DCi))%>%
+         rank=rank(-DCi)) %>%
   filter(rank<4)
   
-N_yr14<-relabund%>%
-  right_join(trt_CN)%>%
-  right_join(exyrs)%>%
-  filter(trt=="N")%>%
-  filter(experiment_year==14)%>%
-  group_by(project_name, genus_species)%>%
-  summarize(mabund=mean(relabund), n=length(relabund))%>%
-  left_join(nplots)%>%
+N_yr14 <- relabund %>%
+  right_join(trt_CN) %>%
+  right_join(exyrs) %>%
+  filter(trt=="N") %>%
+  filter(experiment_year==14) %>%
+  group_by(project_name, genus_species) %>%
+  summarize(mabund=mean(relabund), n=length(relabund)) %>%
+  left_join(nplots) %>%
   mutate(freq=n/nplot,
          DCi=(mabund*freq)/2,
-         rank=rank(-DCi))%>%
+         rank=rank(-DCi)) %>%
   filter(rank<4)
 
-N_yr9<-relabund%>%
-  right_join(trt_CN)%>%
-  right_join(exyrs)%>%
-  filter(trt=="N")%>%
-  filter(experiment_year==9)%>%
-  group_by(project_name, genus_species)%>%
-  summarize(mabund=mean(relabund), n=length(relabund))%>%
-  left_join(nplots)%>%
+N_yr9 <- relabund %>%
+  right_join(trt_CN) %>%
+  right_join(exyrs) %>%
+  filter(trt=="N") %>%
+  filter(experiment_year==9) %>%
+  group_by(project_name, genus_species) %>%
+  summarize(mabund=mean(relabund), n=length(relabund)) %>%
+  left_join(nplots) %>%
   mutate(freq=n/nplot,
          DCi=(mabund*freq)/2,
-         rank=rank(-DCi))%>%
+         rank=rank(-DCi)) %>%
   filter(rank<4)
 
-lyrs<-data%>%
-  select(project_name, calendar_year)%>%
-  unique%>%
-  group_by(project_name)%>%
-  summarise(end=max(calendar_year))%>%
-  ungroup()%>%
-  select(project_name, end)%>%
+lyrs <- data %>%
+  select(project_name, calendar_year) %>%
+  unique %>%
+  group_by(project_name) %>%
+  summarise(end=max(calendar_year)) %>%
+  ungroup() %>%
+  select(project_name, end) %>%
   rename(calendar_year=end)
 
-N_yrlast<-relabund%>%
-  right_join(trt_CN)%>%
-  right_join(lyrs)%>%
-  filter(trt=="N")%>%
-  group_by(project_name, genus_species)%>%
-  summarize(mabund=mean(relabund), n=length(relabund))%>%
-  left_join(nplots)%>%
+N_yrlast <- relabund %>%
+  right_join(trt_CN) %>%
+  right_join(lyrs) %>%
+  filter(trt=="N") %>%
+  group_by(project_name, genus_species) %>%
+  summarize(mabund=mean(relabund), n=length(relabund)) %>%
+  left_join(nplots) %>%
   mutate(freq=n/nplot,
          DCi=(mabund*freq)/2,
-         rank=rank(-DCi))%>%
+         rank=rank(-DCi)) %>%
   filter(rank<4)
 
 
