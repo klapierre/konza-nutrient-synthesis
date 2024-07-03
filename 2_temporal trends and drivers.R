@@ -15,7 +15,7 @@ library(codyn)
 library(ggthemes)
 library(tidyverse)
 
-setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\data') #kim's
+setwd('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\data') #kim's
 setwd("~/Dropbox/Konza Nutrient Synthesis") #meghan's
 
 theme_set(theme_bw())
@@ -176,7 +176,7 @@ exptYearFig <- ggplot(data=subset(compDiffTimeSubset,experiment_year>0 & !(proje
   ylim(0,0.8) +
   scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
   theme(legend.position='none')
-# ggsave(exptYearFig, file='C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 1b_temporalTrajectories_20240306.png', width=7.5, height=7.5, units='in', dpi=300, bg='white')
+# ggsave(exptYearFig, file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 1b_temporalTrajectories_20240306.png', width=7.5, height=7.5, units='in', dpi=300, bg='white')
 
 # Figure by calendar year
 calYearFig <- ggplot(data=subset(compDiffTimeSubset,experiment_year>0 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=calendar_year, y=composition_diff, color=project_name)) +
@@ -192,7 +192,7 @@ calYearFig <- ggplot(data=subset(compDiffTimeSubset,experiment_year>0 & !(projec
                      values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), 
                      labels=c("BGP Burned", 'BGP Unburned', 'ChANGE', 'Invert', 'NutNet', 'PPlots')) +
   ylim(0,0.8) 
-# ggsave(calYearFig, file='C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 1a_temporalTrajectories_20240306.png', width=17, height=7.5, units='in', dpi=300, bg='white')
+# ggsave(calYearFig, file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 1a_temporalTrajectories_20240306.png', width=17, height=7.5, units='in', dpi=300, bg='white')
 
 
 
@@ -472,3 +472,4 @@ ggplot(precipDiff, aes(x=grow_precip)) +
   ylab('Density') + xlab('Growing Season Precipitation (mm)') +
   xlim(c(300,800))
 #export 1200x250
+
