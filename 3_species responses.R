@@ -16,14 +16,15 @@ library(ggthemes)
 library(tidyverse)
 
 setwd('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\data') #kim's
-setwd("~/Dropbox/Konza Nutrient Synthesis") #meghan's
+# setwd("~/Dropbox/Konza Nutrient Synthesis") #meghan's
 
 theme_set(theme_bw())
 theme_update(axis.title.x=element_text(size=30, vjust=-0.35), axis.text.x=element_text(size=25),
              axis.title.y=element_text(size=30, angle=90, vjust=0.5), axis.text.y=element_text(size=25),
              plot.title = element_text(size=30, vjust=2),
              panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
-             legend.title=element_blank(), legend.text=element_text(size=25))
+             legend.title=element_blank(), legend.text=element_text(size=25),
+             strip.text.x=element_text(size=25), strip.text.y=element_text(size=25))
 
 # bar graph summary statistics function
 #barGraphStats(data=, variable="", byFactorNames=c(""))
@@ -124,33 +125,55 @@ domsp <- relabund %>%
                        ifelse(genus_species=='aster_ericoides', 'symphyotrichum_ericoides',
                        ifelse(genus_species %in% c('aster_oblongifolia', 'aster_oblongifolius'), 'symphyotrichum_oblongifolium',
                        ifelse(genus_species=='solidago_canadensis', 'solidago_altissima',
-                              genus_species))))))))
+                              genus_species)))))))) %>% 
+  mutate(genus_species2=ifelse(genus_species=='ambrosia_psilostachya', 'Ambrosia psilostachya',
+                        ifelse(genus_species=='amorpha_canescens', 'Amorpha canescens',
+                        ifelse(genus_species=='andropogon_gerardii', 'Andropogon gerardii',
+                        ifelse(genus_species=='bouteloua_curtipendula', 'Bouteloua curtipendula',
+                        ifelse(genus_species=='dichanthelium_oligosanthes', 'Dichanthelium oligosanthes',
+                        ifelse(genus_species=='panicum_virgatum', 'Panicum virgatum',
+                        ifelse(genus_species=='physalis_pumila', 'Physalis pumila',
+                        ifelse(genus_species=='schizachyrium_scoparium', 'Schizachyrium scoparium',
+                        ifelse(genus_species=='sorghastrum_nutans', 'Sorghastrum nutans', genus_species))))))))))
+
+domsp$genus_species2 = factor(domsp$genus_species2, levels=c('Schizachyrium scoparium', 'Sorghastrum nutans', 'Andropogon gerardii',
+                                                             'Bouteloua curtipendula', 'Panicum virgatum', 'Dichanthelium oligosanthes', 
+                                                             'Ambrosia psilostachya', 'Amorpha canescens', 'Physalis pumila', 'NA'))
 
 
 #figure
-ggplot(data=subset(domsp, experiment_year>0 & treatment=='nitrogen' &
-                          !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned')) &
-                          genus_species %in% c('ambrosia_psilostachya', 'ambrosia_artemisiifolia', 'amorpha_canescens', 'andropogon_gerardii',
-                                               'asclepias_stenophylla', 'asclepias_verticillata', 'bouteloua_curtipendula', 
-                                               'brickellia_eupatroides', 'carex_inops', 'carex_meadii', 'circium_altissimum', 'conyza_canadensis',
-                                               'dichanthelium_oligosanthes', 'eragrostis_spectabolis', 'euphorbia_nutans', 'helianthus_annuus',
-                                               'linum_sulcatum', 'oxalis_stricta', 'panicum_capillare', 'panicum_virgatum', 'physalis_pumila',
-                                               'poa_pratensis', 'ruellia_humulis', 'salvia_azurea', 'schizachyrium_scoparium', 
-                                               'silene_antirrhina', 'solidago_altissima', 'solidago_missouriensis',
-                                               'sorghastrum_nutans', 'sporobolus_compositus', 'sporobolus_heterolepis', 
-                                               'symphyotrichum_ericoides', 'symphyotrichum_oblongifolia', 'triodanis_perfoliata',
-                                               'vernonia_baldwinii')), 
+ggplot(data=subset(domsp, experiment_year<7 & experiment_year!=0 & treatment=='nitrogen' &
+                          !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned', 'ChANGE')) &
+                          genus_species %in% c('ambrosia_psilostachya', 'amorpha_canescens', 'andropogon_gerardii',
+                                               'bouteloua_curtipendula', 'dichanthelium_oligosanthes', 'panicum_virgatum', 'physalis_pumila',
+                                               'schizachyrium_scoparium', 'sorghastrum_nutans')), 
        aes(x=experiment_year, y=DCi, color=project_name)) +
   geom_point(size=5) +
   geom_line(linewidth=2) +
+  scale_x_continuous(limits = c(1, 6), breaks = seq(from=1, to=6, by=1)) +
   xlab('Experiment Year') +
   ylab('DCi') +
-  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
-  facet_wrap(~genus_species, scales='free_y') +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  facet_wrap(~genus_species2, scales='free_y') +
   theme(legend.position='none')
 
 
-
+#figure
+ggplot(data=subset(domsp, experiment_year<7 & experiment_year!=0 & treatment=='nitrogen' &
+                     !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned', 'ChANGE')) &
+                     genus_species %in% c('ambrosia_psilostachya', 'amorpha_canescens', 'andropogon_gerardii',
+                                          'bouteloua_curtipendula', 'dichanthelium_oligosanthes', 'panicum_virgatum', 'physalis_pumila',
+                                          'schizachyrium_scoparium', 'sorghastrum_nutans')), 
+       aes(x=experiment_year, y=100*mabund, color=project_name)) +
+  geom_point(size=5) +
+  geom_line(linewidth=2) +
+  scale_x_continuous(limits = c(1, 6), breaks = seq(from=1, to=6, by=1)) +
+  xlab('Experiment Year') +
+  ylab('Relative Abundance') +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  facet_wrap(~genus_species2, scales='free_y') +
+  theme(legend.position='none')
+# ggsave(file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 5_sppTrajectories_20240703.png', width=17, height=17, units='in', dpi=300, bg='white')
 
 
 
