@@ -16,7 +16,7 @@ library(ggthemes)
 library(tidyverse)
 
 setwd('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\data') #kim's
-setwd("~/Dropbox/Konza Nutrient Synthesis") #meghan's
+# setwd("~/Dropbox/Konza Nutrient Synthesis") #meghan's
 
 theme_set(theme_bw())
 theme_update(axis.title.x=element_text(size=30, vjust=-0.35), axis.text.x=element_text(size=25),
@@ -53,51 +53,45 @@ barGraphStats <- function(data, variable, byFactorNames) {
 
 #community data
 
-community<-read.csv("Konza_nutrient synthesis_spp comp_20240703.csv")%>%
+community<-read.csv("Konza_nutrient synthesis_spp comp_20240703.csv") %>%
   #consistently name control plots
-  mutate(treatment2=ifelse(treatment %in% c('x_x_x', 'u_u_c', 'control', 'N1P0', 'b_u_c', '0'), 'control', ifelse(treatment=='A C'&project_name=='GF Burned', 'control', ifelse(treatment=='P C'&project_name=='GF Unburned', 'control', as.character(treatment)))))%>%
-  select(-treatment)%>%
-  rename(treatment=treatment2)%>%
+  mutate(treatment2=ifelse(treatment %in% c('x_x_x', 'u_u_c', 'control', 'N1P0', 'b_u_c', '0'), 'control', ifelse(treatment=='A C'&project_name=='GF Burned', 'control', ifelse(treatment=='P C'&project_name=='GF Unburned', 'control', as.character(treatment))))) %>%
+  select(-treatment) %>%
+  rename(treatment=treatment2) %>%
   #create a replicate variable unique to each experiment
-  mutate(replicate=paste(project_name, treatment, plot_id, sep='::'))%>%
+  mutate(replicate=paste(project_name, treatment, plot_id, sep='::')) %>%
   #filter out 0s
-  filter(abundance>0)%>%
-  mutate(treatment=as.character(as.factor(treatment)))%>%
+  filter(abundance>0) %>%
+  mutate(treatment=as.character(as.factor(treatment))) %>%
   #create project_trt column
   mutate(project_trt=paste(project_name, treatment, sep='::')) %>% 
   # #drop Ukulinga data because time series too short and restoration plots because planted communities
   filter(!(project_name %in% c('ukulinga annual', 'ukulinga four', 'ukulinga unburned', 'restoration'))) %>% 
   #filter out sugar addition in Ghost Fire
-  filter(treatment %notin% c('A S', 'P S'))%>%
+  filter(treatment %notin% c('A S', 'P S')) %>%
   #filter out pre-treatment data
-  mutate(pretrt=ifelse(project_name=='pplots'&calendar_year==2002, 1, ifelse(project_name=='nutnet'&calendar_year==2007, 1, ifelse(project_name=='GF Burned'&calendar_year==2014, 1, ifelse(project_name=='GF Unburned'&calendar_year==2014, 1, ifelse(project_name=='ChANGE'&calendar_year==2013, 1, 0))))))%>%
-  filter(pretrt==0)%>%
+  mutate(pretrt=ifelse(project_name=='pplots'&calendar_year==2002, 1, ifelse(project_name=='nutnet'&calendar_year==2007, 1, ifelse(project_name=='GF Burned'&calendar_year==2014, 1, ifelse(project_name=='GF Unburned'&calendar_year==2014, 1, ifelse(project_name=='ChANGE'&calendar_year==2013, 1, 0)))))) %>%
+  filter(pretrt==0) %>%
   select(-pretrt)
 
 #list of experiments, treatments, and plots
 plots <- community%>%
-  select(project_name, treatment, plot_id, replicate, calendar_year)%>%
+  select(project_name, treatment, plot_id, replicate, calendar_year) %>%
   unique()
 
 #list of experiments, treatments
 trt <- community%>%
-  select(project_name, treatment, project_trt)%>%
+  select(project_name, treatment, project_trt) %>%
   unique()
 
 #list of experiments
 proj <- community%>%
-  select(project_name)%>%
+  select(project_name) %>%
   unique()
 
 
 
 ##### Calculate Community Change Metrics #####
-
-###RAC change
-#year to year variation
-yearlyRACchange <- RAC_change(community, time.var='calendar_year', species.var='genus_species', abundance.var='abundance', replicate.var='replicate')%>%
-  left_join(plots)%>%
-  mutate(comparison='yearly')
 
 ### Compositional Change
 
@@ -112,11 +106,11 @@ for(i in 1:length(trt$project_trt)) {
   subset <- community[community$project_trt==as.character(trt$project_trt[i]),]
   
   #calculating composition change from year to year
-  yearly <- multivariate_change(subset, time.var = 'calendar_year', species.var = "genus_species", abundance.var = 'abundance', replicate.var = 'plot_id')%>%
+  yearly <- multivariate_change(subset, time.var = 'calendar_year', species.var = "genus_species", abundance.var = 'abundance', replicate.var = 'plot_id') %>%
     mutate(project_trt=trt$project_trt[i], comparison='yearly')
 
   #calculating composition change from year to year
-  cumulative <- multivariate_change(subset, time.var = 'calendar_year', species.var = "genus_species", abundance.var = 'abundance', replicate.var = 'plot_id', reference.time=min(subset$calendar_year))%>%
+  cumulative <- multivariate_change(subset, time.var = 'calendar_year', species.var = "genus_species", abundance.var = 'abundance', replicate.var = 'plot_id', reference.time=min(subset$calendar_year)) %>%
     mutate(project_trt=trt$project_trt[i], comparison='cumulative')
   
   all <- rbind(yearly, cumulative)
@@ -141,7 +135,7 @@ for(i in 1:length(proj$project_name)) {
   subset <- community[community$project_name==as.character(proj$project_name[i]),]
   
   #calculating composition difference to control plots
-  diff <- multivariate_difference(subset, time.var = 'calendar_year', species.var = "genus_species", abundance.var = 'abundance', replicate.var = 'plot_id', treatment.var='treatment', reference.treatment='control')%>%
+  diff <- multivariate_difference(subset, time.var = 'calendar_year', species.var = "genus_species", abundance.var = 'abundance', replicate.var = 'plot_id', treatment.var='treatment', reference.treatment='control') %>%
     mutate(project_name=proj$project_name[i])
   
   #pasting into the dataframe made for this analysis
@@ -162,7 +156,7 @@ compDiffTime <- compDiff%>%
 
 # Compositional difference across all experiments
 compDiffTimeSubset <- compDiffTime%>%
-  mutate(keep=ifelse(treatment2 %in% c('b_u_n','u_u_n','N2P0','N','NPK_x_x','10', '5'), 1, ifelse(treatment2=='A_U'&project_name=='GF Burned', 1, ifelse(treatment2=='P_U'&project_name=='GF Unburned', 1, 0))))%>%
+  mutate(keep=ifelse(treatment2 %in% c('b_u_n','u_u_n','N2P0','N','NPK_x_x','10', '5'), 1, ifelse(treatment2=='A_U'&project_name=='GF Burned', 1, ifelse(treatment2=='P_U'&project_name=='GF Unburned', 1, 0)))) %>%
   filter(keep==1)
 
 # Figure by expt year
@@ -331,19 +325,156 @@ print(invert, vp=viewport(layout.pos.row=2, layout.pos.col=3))
 ##### Calculating Change in Difference (from year x to x-1 for each experiment) #####
 
 compDiffChange <- compDiffTime%>%
-  group_by(project_name, treatment2)%>%
-  mutate(comp_diff_change=(composition_diff-lag(composition_diff, order_by=experiment_year)))%>%
-  ungroup()%>%
+  group_by(project_name, treatment2) %>%
+  mutate(comp_diff_change=(composition_diff-lag(composition_diff, order_by=experiment_year))) %>%
+  ungroup() %>%
   mutate(burn_regime=ifelse(project_name %in% c('BGP burned', 'ChANGE', 'GF Burned'), 'annual', ifelse(project_name %in% c('BGP unburned', 'GF Unburned'), 'unburned', 'two-year')))
 
 # write.csv(compDiffChange, 'Konza_nutrient synthesis_change in yearly diff_20240703.csv')
 
-#burn effect
+
+
+##### Burn Effect #####
 ggplot(data=subset(compDiffChange, experiment_year<7), aes(x=burn_regime, y=comp_diff_change, fill=as.factor(burned))) +
   geom_boxplot() +
   scale_fill_manual(values=c('red3', 'white'), labels=c('unburned year', 'burned year')) +
   ylab('Yearly Change in Compositional Difference') + xlab('Burn Regime')
 #export at 1000x1000
+
+
+
+##### RAC change #####
+#year to year variation
+yearlyRACchange <- RAC_change(community, time.var='calendar_year', species.var='genus_species', abundance.var='abundance', replicate.var='replicate') %>%
+  select(-calendar_year) %>%
+  rename(calendar_year=calendar_year2) %>%
+  left_join(plots) %>%
+  mutate(comparison='yearly') %>% 
+  mutate(keep=ifelse(treatment %in% c('b_u_n','u_u_n','N2P0','N','NPK_x_x','10', '5'), 1, ifelse(treatment=='A_U'&project_name=='GF Burned', 1, ifelse(treatment=='P_U'&project_name=='GF Unburned', 1, 0))))  %>% 
+  filter(keep==1) %>%
+  group_by(project_name, calendar_year, treatment) %>% 
+  summarise(richness_change=mean(richness_change), evenness_change=mean(evenness_change), rank_change=mean(rank_change), gains=mean(gains), losses=mean(losses)) %>% 
+  ungroup() %>% 
+  rename(treatment2=treatment) %>% 
+  left_join(compDiffChange) %>% 
+  left_join(experimentYear)
+
+# Gains figures
+exptYearGainsFig <- ggplot(data=subset(yearlyRACchange, experiment_year>0 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=experiment_year, y=gains, color=project_name)) +
+  # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
+  geom_point(size=5) +
+  geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
+  xlab('Experiment Year') +
+  ylab('Species Gains') +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  ylim(0,0.6) +
+  scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
+  theme(legend.position='none')
+
+#test gains correlation
+with(subset(yearlyRACchange, experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned'))), cor.test(gains, comp_diff_change, method = "pearson", use = "complete.obs"))
+
+exptYearGainsByCommFig <- ggplot(data=subset(yearlyRACchange, experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned'))), aes(x=gains, y=comp_diff_change, color=project_name)) +
+  # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
+  geom_point(size=5) +
+  # geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
+  xlab('Species Gains') +
+  ylab('Composition Difference') +
+  scale_color_manual(values=c('grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  # ylim(0,0.6) +
+  # scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
+  theme(legend.position='none')
+
+# Losses figures
+exptYearLossesFig <- ggplot(data=subset(yearlyRACchange, experiment_year>0 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=experiment_year, y=losses, color=project_name)) +
+  # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
+  geom_point(size=5) +
+  geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
+  xlab('Experiment Year') +
+  ylab('Species Losses') +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  ylim(0,0.4) +
+  scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
+  theme(legend.position='none')
+
+#test losses correlation
+with(subset(yearlyRACchange, experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned'))), cor.test(losses, comp_diff_change, method = "pearson", use = "complete.obs"))
+
+exptYearLossesByCommFig <- ggplot(data=subset(yearlyRACchange, experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned'))), aes(x=losses, y=comp_diff_change, color=project_name)) +
+  # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
+  geom_point(size=5) +
+  # geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
+  xlab('Species Losses') +
+  ylab('Composition Difference') +
+  scale_color_manual(values=c('grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  # ylim(0,0.6) +
+  # scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
+  theme(legend.position='none')
+
+
+# Rank figures
+exptYearRankFig <- ggplot(data=subset(yearlyRACchange, experiment_year>0 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=experiment_year, y=rank_change, color=project_name)) +
+  # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
+  geom_point(size=5) +
+  geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
+  xlab('Experiment Year') +
+  ylab('Rank Change') +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  ylim(0,0.3) +
+  scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
+  theme(legend.position='none')
+
+#test rank change correlation
+with(subset(yearlyRACchange, experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned'))), cor.test(rank_change, comp_diff_change, method = "pearson", use = "complete.obs"))
+
+exptYearRankByCommFig <- ggplot(data=subset(yearlyRACchange, experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned'))), aes(x=rank_change, y=comp_diff_change, color=project_name)) +
+  # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
+  geom_point(size=5) +
+  # geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
+  xlab('Rank Change') +
+  ylab('Composition Difference') +
+  scale_color_manual(values=c('grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  # ylim(0,0.6) +
+  # scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
+  theme(legend.position='none')
+
+
+# Evenness figures
+exptYearEvenFig <- ggplot(data=subset(yearlyRACchange, experiment_year>0 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=experiment_year, y=evenness_change, color=project_name)) +
+  # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
+  geom_point(size=5) +
+  geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
+  xlab('Experiment Year') +
+  ylab('Evenness Change') +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  # ylim(0,0.3) +
+  scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
+  theme(legend.position='none')
+
+#test rank change correlation
+with(subset(yearlyRACchange, experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned'))), cor.test(evenness_change, comp_diff_change, method = "pearson", use = "complete.obs"))
+
+exptYearEvenByCommFig <- ggplot(data=subset(yearlyRACchange, experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned'))), aes(x=rank_change, y=comp_diff_change, color=project_name)) +
+  # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
+  geom_point(size=5) +
+  # geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
+  xlab('Evenness Change') +
+  ylab('Composition Difference') +
+  scale_color_manual(values=c('grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  # ylim(0,0.6) +
+  # scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
+  theme(legend.position='none')
+
+pushViewport(viewport(layout=grid.layout(4,2)))
+print(exptYearGainsFig, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+print(exptYearGainsByCommFig, vp=viewport(layout.pos.row=1, layout.pos.col=2))
+print(exptYearLossesFig, vp=viewport(layout.pos.row=2, layout.pos.col=1))
+print(exptYearLossesByCommFig, vp=viewport(layout.pos.row=2, layout.pos.col=2))
+print(exptYearRankFig, vp=viewport(layout.pos.row=3, layout.pos.col=1))
+print(exptYearRankByCommFig, vp=viewport(layout.pos.row=3, layout.pos.col=2))
+print(exptYearEvenFig, vp=viewport(layout.pos.row=4, layout.pos.col=1))
+print(exptYearEvenByCommFig, vp=viewport(layout.pos.row=4, layout.pos.col=2))
+#export at 1800x3000
 
 
 
