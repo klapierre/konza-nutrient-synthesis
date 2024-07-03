@@ -10,7 +10,7 @@
 library(tidyverse)
 
 ### Setting working directories
-setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis\\data') #kim's
+setwd('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\data') #kim's
 setwd("~/Dropbox/Konza Nutrient Synthesis") #meghan's
 
 ### Functions
