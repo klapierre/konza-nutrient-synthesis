@@ -360,15 +360,15 @@ yearlyRACchange <- RAC_change(community, time.var='calendar_year', species.var='
   left_join(experimentYear)
 
 # Gains figures
-exptYearGainsFig <- ggplot(data=subset(yearlyRACchange, experiment_year>0 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=experiment_year, y=gains, color=project_name)) +
+exptYearGainsFig <- ggplot(data=subset(yearlyRACchange, experiment_year>0 & experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=experiment_year, y=gains, color=project_name)) +
   # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
   geom_point(size=5) +
   geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
   xlab('Experiment Year') +
   ylab('Species Gains') +
   scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
-  ylim(0,0.6) +
-  scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
+  ylim(0,0.4) +
+  scale_x_continuous(limits = c(2, 6), breaks = seq(from=2, to=10, by=1)) +
   theme(legend.position='none')
 
 #test gains correlation
@@ -386,7 +386,7 @@ exptYearGainsByCommFig <- ggplot(data=subset(yearlyRACchange, experiment_year<7 
   theme(legend.position='none')
 
 # Losses figures
-exptYearLossesFig <- ggplot(data=subset(yearlyRACchange, experiment_year>0 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=experiment_year, y=losses, color=project_name)) +
+exptYearLossesFig <- ggplot(data=subset(yearlyRACchange, experiment_year>0 & experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=experiment_year, y=losses, color=project_name)) +
   # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
   geom_point(size=5) +
   geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
@@ -394,7 +394,7 @@ exptYearLossesFig <- ggplot(data=subset(yearlyRACchange, experiment_year>0 & !(p
   ylab('Species Losses') +
   scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
   ylim(0,0.4) +
-  scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
+  scale_x_continuous(limits = c(2, 6), breaks = seq(from=2, to=10, by=1)) +
   theme(legend.position='none')
 
 #test losses correlation
@@ -413,7 +413,7 @@ exptYearLossesByCommFig <- ggplot(data=subset(yearlyRACchange, experiment_year<7
 
 
 # Rank figures
-exptYearRankFig <- ggplot(data=subset(yearlyRACchange, experiment_year>0 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=experiment_year, y=rank_change, color=project_name)) +
+exptYearRankFig <- ggplot(data=subset(yearlyRACchange, experiment_year>0 & experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=experiment_year, y=rank_change, color=project_name)) +
   # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
   geom_point(size=5) +
   geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
@@ -421,7 +421,7 @@ exptYearRankFig <- ggplot(data=subset(yearlyRACchange, experiment_year>0 & !(pro
   ylab('Rank Change') +
   scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
   ylim(0,0.3) +
-  scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
+  scale_x_continuous(limits = c(2, 6), breaks = seq(from=2, to=10, by=1)) +
   theme(legend.position='none')
 
 #test rank change correlation
@@ -440,7 +440,7 @@ exptYearRankByCommFig <- ggplot(data=subset(yearlyRACchange, experiment_year<7 &
 
 
 # Evenness figures
-exptYearEvenFig <- ggplot(data=subset(yearlyRACchange, experiment_year>0 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=experiment_year, y=evenness_change, color=project_name)) +
+exptYearEvenFig <- ggplot(data=subset(yearlyRACchange, experiment_year>0 & experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=experiment_year, y=evenness_change, color=project_name)) +
   # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
   geom_point(size=5) +
   geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
@@ -448,7 +448,7 @@ exptYearEvenFig <- ggplot(data=subset(yearlyRACchange, experiment_year>0 & !(pro
   ylab('Evenness Change') +
   scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
   # ylim(0,0.3) +
-  scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
+  scale_x_continuous(limits = c(2, 6), breaks = seq(from=2, to=10, by=1)) +
   theme(legend.position='none')
 
 #test rank change correlation
