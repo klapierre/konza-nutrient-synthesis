@@ -123,12 +123,23 @@ sp_pplots <- read.csv("species_comp\\PPL011_pplots.csv")%>%
   summarise(abundance=max(Abundance))%>%
   ungroup()
 
-sp_change <- read.csv("species_comp\\KNZ_change_sppComp.csv")%>%
+sp_change_1 <- read.csv("species_comp\\KNZ_change_sppComp.csv")%>%
   rename(calendar_year=year, plot_id=plot, genus_species=species)%>%
   left_join(change_trt)%>%
   group_by(project_name, calendar_year, plot_id, treatment, genus_species)%>%
   summarise(abundance=max(cover))%>%
   ungroup()
+
+sp_change_2 <- read.csv("species_comp\\ChANGE_sppcomp_2020-2023.csv")%>%
+  mutate(project_name='ChANGE') %>% 
+  rename(calendar_year=year, plot_id=plot, genus_species=species)%>%
+  select(-treatment) %>% 
+  left_join(change_trt)%>%
+  group_by(project_name, calendar_year, plot_id, treatment, genus_species)%>%
+  summarise(abundance=max(cover))%>%
+  ungroup()
+
+sp_change <- rbind(sp_change_1, sp_change_2)
 
 sp_ukulinga <- read.csv('species_comp\\KNZ_ukulinga_sppComp.csv')%>%
   left_join(ukulinga_trt)%>%
@@ -173,7 +184,7 @@ relCov <- sp_all%>%
   left_join(totCov)%>%
   mutate(abundance=cov/tot_cover)
 
-# write.csv(relCov, 'Konza_nutrient synthesis_spp comp_20240304.csv', row.names=F)
+# write.csv(relCov, 'Konza_nutrient synthesis_spp comp_20240703.csv', row.names=F)
 
 
 

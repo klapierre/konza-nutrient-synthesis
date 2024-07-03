@@ -53,7 +53,7 @@ barGraphStats <- function(data, variable, byFactorNames) {
 
 #community data
 
-community<-read.csv("Konza_nutrient synthesis_spp comp_20240304.csv")%>%
+community<-read.csv("Konza_nutrient synthesis_spp comp_20240703.csv")%>%
   #consistently name control plots
   mutate(treatment2=ifelse(treatment %in% c('x_x_x', 'u_u_c', 'control', 'N1P0', 'b_u_c', '0'), 'control', ifelse(treatment=='A C'&project_name=='GF Burned', 'control', ifelse(treatment=='P C'&project_name=='GF Unburned', 'control', as.character(treatment)))))%>%
   select(-treatment)%>%
@@ -148,7 +148,7 @@ for(i in 1:length(proj$project_name)) {
   compDiff=rbind(diff, compDiff)  
 }
 
-# write.csv(compDiff, 'Konza_nutrient synthesis_comp difference_20240305.csv')
+# write.csv(compDiff, 'Konza_nutrient synthesis_comp difference_20240704.csv')
 
 
 
@@ -176,7 +176,7 @@ exptYearFig <- ggplot(data=subset(compDiffTimeSubset,experiment_year>0 & !(proje
   ylim(0,0.8) +
   scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
   theme(legend.position='none')
-# ggsave(exptYearFig, file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 1b_temporalTrajectories_20240306.png', width=7.5, height=7.5, units='in', dpi=300, bg='white')
+# ggsave(exptYearFig, file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 1b_temporalTrajectories_20240703.png', width=7.5, height=7.5, units='in', dpi=300, bg='white')
 
 # Figure by calendar year
 calYearFig <- ggplot(data=subset(compDiffTimeSubset,experiment_year>0 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=calendar_year, y=composition_diff, color=project_name)) +
@@ -192,7 +192,7 @@ calYearFig <- ggplot(data=subset(compDiffTimeSubset,experiment_year>0 & !(projec
                      values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), 
                      labels=c("BGP Burned", 'BGP Unburned', 'ChANGE', 'Invert', 'NutNet', 'PPlots')) +
   ylim(0,0.8) 
-# ggsave(calYearFig, file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 1a_temporalTrajectories_20240306.png', width=17, height=7.5, units='in', dpi=300, bg='white')
+# ggsave(calYearFig, file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 1a_temporalTrajectories_20240703.png', width=17, height=7.5, units='in', dpi=300, bg='white')
 
 
 
@@ -216,7 +216,7 @@ pplots<-
         legend.position=c(0.1,0.88))+
   xlab("Year")+
   ylab("Community Difference")+
-  ggtitle("Phosphorus Plots")+
+  ggtitle("(d) Phosphorus Plots")+
   ylim(min=0, max=0.8)
 
 BGP_ub<-
@@ -229,7 +229,7 @@ BGP_ub<-
         legend.position=c(0.1,0.9))+
   xlab("Year")+
   ylab("Community Difference")+
-  ggtitle("Belowground Plots Unburned")+
+  ggtitle("(b) Belowground Plots Unburned")+
   ylim(min=0, max=0.8)
 
 BGP_b<-
@@ -243,7 +243,7 @@ BGP_b<-
         legend.position=c(0.1,0.88))+
   xlab("Year")+
   ylab("Community Difference")+
-  ggtitle("Belowground Plots Burned")+
+  ggtitle("(a) Belowground Plots Burned")+
   ylim(min=0, max=0.8)
 
 nutnet<-
@@ -257,7 +257,7 @@ nutnet<-
         legend.position=c(0.1,0.88))+
   xlab("Year")+
   ylab("Community Difference")+
-  ggtitle("Nutrient Network")+
+  ggtitle("(e) Nutrient Network")+
   ylim(min=0, max=0.8)
 
 invert<-
@@ -271,7 +271,7 @@ invert<-
         legend.position=c(0.1,0.9))+
   xlab("Year")+
   ylab("Community Difference")+
-  ggtitle("Invertebrate Removal")+
+  ggtitle("(f) Invertebrate Removal")+
   ylim(min=0, max=0.8)
 
 change<-
@@ -286,7 +286,7 @@ change<-
         legend.position=c(0.1,0.9))+
   xlab("Year")+
   ylab("Community Difference")+
-  ggtitle("ChANGE")+
+  ggtitle("(c) ChANGE")+
   ylim(min=0, max=0.8)
 
 # GFburned<-
@@ -336,13 +336,14 @@ compDiffChange <- compDiffTime%>%
   ungroup()%>%
   mutate(burn_regime=ifelse(project_name %in% c('BGP burned', 'ChANGE', 'GF Burned'), 'annual', ifelse(project_name %in% c('BGP unburned', 'GF Unburned'), 'unburned', 'two-year')))
 
-# write.csv(compDiffChange, 'Konza_nutrient synthesis_change in yearly diff_20240306.csv')
+# write.csv(compDiffChange, 'Konza_nutrient synthesis_change in yearly diff_20240703.csv')
 
 #burn effect
 ggplot(data=subset(compDiffChange, experiment_year<7), aes(x=burn_regime, y=comp_diff_change, fill=as.factor(burned))) +
   geom_boxplot() +
+  scale_fill_manual(values=c('red3', 'white'), labels=c('unburned year', 'burned year')) +
   ylab('Yearly Change in Compositional Difference') + xlab('Burn Regime')
-#export at 800x800
+#export at 1000x1000
 
 
 
