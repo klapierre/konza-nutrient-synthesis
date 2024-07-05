@@ -136,9 +136,11 @@ domsp <- relabund %>%
                         ifelse(genus_species=='physalis_pumila', 'Physalis pumila',
                         ifelse(genus_species=='schizachyrium_scoparium', 'Schizachyrium scoparium',
                         ifelse(genus_species=='sorghastrum_nutans', 'Sorghastrum nutans', genus_species)))))))))) %>% 
-  mutate(project2=ifelse(project_name=='invert', 'Invert Removal',
-                  ifelse(project_name=='nutnet', 'NutNet',
-                  ifelse(project_name=='pplots', 'PPlots', project_name))))
+  mutate(project2=ifelse(project_name=='invert', 'Invert',
+                         ifelse(project_name=='BGP unburned', 'BGP Unburned',
+                         ifelse(project_name=='BGP burned', 'BGP Burned',
+                         ifelse(project_name=='nutnet', 'NutNet',
+                         ifelse(project_name=='pplots', 'PPlots', project_name))))))
 
 domsp$genus_species2 = factor(domsp$genus_species2, levels=c('Schizachyrium scoparium', 'Sorghastrum nutans', 'Andropogon gerardii',
                                                              'Bouteloua curtipendula', 'Panicum virgatum', 'Dichanthelium oligosanthes', 
@@ -220,9 +222,11 @@ abund <- relabund %>%
                         ifelse(genus_species=='physalis_pumila', 'Physalis pumila',
                         ifelse(genus_species=='schizachyrium_scoparium', 'Schizachyrium scoparium',
                         ifelse(genus_species=='sorghastrum_nutans', 'Sorghastrum nutans', genus_species)))))))))) %>% 
-  mutate(project2=ifelse(project_name=='invert', 'Invert Removal',
+  mutate(project2=ifelse(project_name=='invert', 'Invert',
+                  ifelse(project_name=='BGP unburned', 'BGP Unburned',
+                  ifelse(project_name=='BGP burned', 'BGP Burned',
                   ifelse(project_name=='nutnet', 'NutNet',
-                  ifelse(project_name=='pplots', 'PPlots', project_name))))
+                  ifelse(project_name=='pplots', 'PPlots', project_name))))))
 
 abund$genus_species2 = factor(abund$genus_species2, levels=c('Schizachyrium scoparium', 'Sorghastrum nutans', 'Andropogon gerardii',
                                                              'Bouteloua curtipendula', 'Panicum virgatum', 'Dichanthelium oligosanthes', 
