@@ -87,7 +87,8 @@ trt <- community%>%
 #list of experiments
 proj <- community%>%
   select(project_name) %>%
-  unique()
+  unique() %>% 
+  filter(!(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned')))
 
 
 
@@ -343,124 +344,142 @@ ggplot(data=subset(compDiffChange, experiment_year<7), aes(x=burn_regime, y=comp
 
 
 
-##### RAC change #####
-#year to year variation
-yearlyRACchange <- RAC_change(community, time.var='calendar_year', species.var='genus_species', abundance.var='abundance', replicate.var='replicate') %>%
-  select(-calendar_year) %>%
-  rename(calendar_year=calendar_year2) %>%
-  left_join(plots) %>%
-  mutate(comparison='yearly') %>% 
-  mutate(keep=ifelse(treatment %in% c('b_u_n','u_u_n','N2P0','N','NPK_x_x','10', '5'), 1, ifelse(treatment=='A_U'&project_name=='GF Burned', 1, ifelse(treatment=='P_U'&project_name=='GF Unburned', 1, 0))))  %>% 
-  filter(keep==1) %>%
-  group_by(project_name, calendar_year, treatment) %>% 
-  summarise(richness_change=mean(richness_change), evenness_change=mean(evenness_change), rank_change=mean(rank_change), gains=mean(gains), losses=mean(losses)) %>% 
+##### RAC difference by experiment #####
+#makes an empty dataframe
+racDiff=data.frame(row.names=1) 
+
+for(i in 1:length(proj$project_name)) {
+  
+  #creates a dataset for each unique year, trt, exp combo
+  subset <- community[community$project_name==as.character(proj$project_name[i]),]
+  
+  #calculating composition difference to control plots
+  diff <- RAC_difference(subset, time.var='calendar_year', species.var='genus_species', abundance.var='abundance', 
+                         treatment.var = 'treatment', replicate.var='plot_id') %>%
+    mutate(project_name=proj$project_name[i])
+  
+  #pasting into the dataframe made for this analysis
+  racDiff=rbind(diff, racDiff)  
+}
+
+combinedRACdiff <- racDiff %>%
+  filter(treatment=='control',
+         treatment2 %in% c('5', 'NPK_x_x', 'N', 'N2P0', 'b_u_n', 'u_u_n')) %>% 
+  mutate(comparison='difference') %>% 
+  group_by(project_name, calendar_year, treatment2) %>% 
+  summarise(richness_diff_mean=mean(richness_diff), evenness_diff_mean=mean(evenness_diff), 
+            rank_diff_mean=mean(rank_diff), species_diff_mean=mean(species_diff),
+            richness_se=sd(richness_diff)/sqrt(length(richness_diff)), evenness_se=sd(evenness_diff)/sqrt(length(evenness_diff)),
+            rank_se=sd(rank_diff)/sqrt(length(rank_diff)), species_se=sd(species_diff)/sqrt(length(species_diff))) %>% 
   ungroup() %>% 
-  rename(treatment2=treatment) %>% 
   left_join(compDiffChange) %>% 
   left_join(experimentYear)
 
-# Gains figures
-exptYearGainsFig <- ggplot(data=subset(yearlyRACchange, experiment_year>0 & experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=experiment_year, y=gains, color=project_name)) +
-  # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
+# richness figures
+exptYearGainsFig <- ggplot(data=subset(combinedRACdiff, experiment_year>0), 
+                           aes(x=experiment_year, y=richness_diff_mean, color=project_name)) +
+  geom_hline(yintercept=0, color='black') +
   geom_point(size=5) +
   geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
   xlab('Experiment Year') +
-  ylab('Species Gains') +
+  ylab('Proportion Richness Difference') +
   scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
-  ylim(0,0.4) +
-  scale_x_continuous(limits = c(2, 6), breaks = seq(from=2, to=10, by=1)) +
+  # ylim(-0.25,0.25) +
+  scale_x_continuous(limits = c(0, 20), breaks = seq(from=0, to=20, by=5)) +
   theme(legend.position='none')
 
 #test gains correlation
-with(subset(yearlyRACchange, experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned'))), cor.test(gains, comp_diff_change, method = "pearson", use = "complete.obs"))
+with(subset(combinedRACdiff, experiment_year>0), cor.test(richness_diff_mean, composition_diff, method = "pearson", use = "complete.obs"))
 
-exptYearGainsByCommFig <- ggplot(data=subset(yearlyRACchange, experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned'))), aes(x=gains, y=comp_diff_change, color=project_name)) +
+exptYearGainsByCommFig <- ggplot(data=subset(combinedRACdiff, experiment_year>0), aes(x=richness_diff_mean, y=composition_diff)) +
   # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
-  geom_point(size=5) +
-  # geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
-  xlab('Species Gains') +
+  # geom_smooth(method='lm', size=2, se=F, color='black') +
+  geom_point(size=5, aes(color=project_name)) +
+  xlab('Proportional Richness Difference') +
   ylab('Composition Difference') +
-  scale_color_manual(values=c('grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
   # ylim(0,0.6) +
   # scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
   theme(legend.position='none')
 
-# Losses figures
-exptYearLossesFig <- ggplot(data=subset(yearlyRACchange, experiment_year>0 & experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=experiment_year, y=losses, color=project_name)) +
+# spp difference figures
+exptYearLossesFig <- ggplot(data=subset(combinedRACdiff, experiment_year>0), 
+                            aes(x=experiment_year, y=species_diff_mean, color=project_name)) +
   # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
   geom_point(size=5) +
   geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
   xlab('Experiment Year') +
-  ylab('Species Losses') +
+  ylab('Proportional Species Difference') +
   scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
-  ylim(0,0.4) +
-  scale_x_continuous(limits = c(2, 6), breaks = seq(from=2, to=10, by=1)) +
+  # ylim(0,0.6) +
+  scale_x_continuous(limits = c(0, 20), breaks = seq(from=0, to=20, by=5)) +
   theme(legend.position='none')
 
 #test losses correlation
-with(subset(yearlyRACchange, experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned'))), cor.test(losses, comp_diff_change, method = "pearson", use = "complete.obs"))
+with(subset(combinedRACdiff, experiment_year>0), cor.test(species_diff_mean, composition_diff, method = "pearson", use = "complete.obs"))
 
-exptYearLossesByCommFig <- ggplot(data=subset(yearlyRACchange, experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned'))), aes(x=losses, y=comp_diff_change, color=project_name)) +
+exptYearLossesByCommFig <- ggplot(data=subset(combinedRACdiff, experiment_year>0), aes(x=species_diff_mean, y=composition_diff, color=project_name)) +
   # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
   geom_point(size=5) +
   # geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
-  xlab('Species Losses') +
+  xlab('Proportional Species Difference') +
   ylab('Composition Difference') +
-  scale_color_manual(values=c('grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
   # ylim(0,0.6) +
   # scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
   theme(legend.position='none')
 
 
 # Rank figures
-exptYearRankFig <- ggplot(data=subset(yearlyRACchange, experiment_year>0 & experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=experiment_year, y=rank_change, color=project_name)) +
+exptYearRankFig <- ggplot(data=subset(combinedRACdiff, experiment_year>0), aes(x=experiment_year, y=rank_diff_mean, color=project_name)) +
   # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
   geom_point(size=5) +
   geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
   xlab('Experiment Year') +
-  ylab('Rank Change') +
+  ylab('Rank Difference') +
   scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
-  ylim(0,0.3) +
-  scale_x_continuous(limits = c(2, 6), breaks = seq(from=2, to=10, by=1)) +
+  # ylim(0,0.3) +
+  scale_x_continuous(limits = c(0, 20), breaks = seq(from=0, to=20, by=5)) +
   theme(legend.position='none')
 
 #test rank change correlation
-with(subset(yearlyRACchange, experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned'))), cor.test(rank_change, comp_diff_change, method = "pearson", use = "complete.obs"))
+with(subset(combinedRACdiff, experiment_year>0), cor.test(rank_diff_mean, composition_diff, method = "pearson", use = "complete.obs"))
 
-exptYearRankByCommFig <- ggplot(data=subset(yearlyRACchange, experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned'))), aes(x=rank_change, y=comp_diff_change, color=project_name)) +
+exptYearRankByCommFig <- ggplot(data=subset(combinedRACdiff, experiment_year>0), aes(x=rank_diff_mean, y=composition_diff)) +
   # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
-  geom_point(size=5) +
-  # geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
-  xlab('Rank Change') +
+  geom_smooth(method='lm', size=2, se=F, color='black') +
+  geom_point(size=5, aes(color=project_name)) +
+  xlab('Rank Difference') +
   ylab('Composition Difference') +
-  scale_color_manual(values=c('grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
   # ylim(0,0.6) +
   # scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
   theme(legend.position='none')
 
 
 # Evenness figures
-exptYearEvenFig <- ggplot(data=subset(yearlyRACchange, experiment_year>0 & experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=experiment_year, y=evenness_change, color=project_name)) +
+exptYearEvenFig <- ggplot(data=subset(combinedRACdiff, experiment_year>0), aes(x=experiment_year, y=evenness_diff_mean, color=project_name)) +
   # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
+  geom_hline(yintercept=0, color='black') +
   geom_point(size=5) +
   geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
   xlab('Experiment Year') +
-  ylab('Evenness Change') +
+  ylab('Evenness Difference') +
   scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
-  # ylim(0,0.3) +
-  scale_x_continuous(limits = c(2, 6), breaks = seq(from=2, to=10, by=1)) +
+  # ylim(-0.1,0.1) +
+  scale_x_continuous(limits = c(0, 20), breaks = seq(from=0, to=20, by=5)) +
   theme(legend.position='none')
 
-#test rank change correlation
-with(subset(yearlyRACchange, experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned'))), cor.test(evenness_change, comp_diff_change, method = "pearson", use = "complete.obs"))
+#test evenness correlation
+with(subset(combinedRACdiff, experiment_year>0), cor.test(evenness_diff_mean, composition_diff, method = "pearson", use = "complete.obs"))
 
-exptYearEvenByCommFig <- ggplot(data=subset(yearlyRACchange, experiment_year<7 & !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned'))), aes(x=rank_change, y=comp_diff_change, color=project_name)) +
+exptYearEvenByCommFig <- ggplot(data=subset(combinedRACdiff, experiment_year>0), aes(x=evenness_diff_mean, y=composition_diff, color=project_name)) +
   # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
+  geom_smooth(method='lm', size=2, se=F, color='black') +
   geom_point(size=5) +
-  # geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
-  xlab('Evenness Change') +
+  xlab('Evenness Difference') +
   ylab('Composition Difference') +
-  scale_color_manual(values=c('grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
   # ylim(0,0.6) +
   # scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
   theme(legend.position='none')
@@ -475,6 +494,13 @@ print(exptYearRankByCommFig, vp=viewport(layout.pos.row=3, layout.pos.col=2))
 print(exptYearEvenFig, vp=viewport(layout.pos.row=4, layout.pos.col=1))
 print(exptYearEvenByCommFig, vp=viewport(layout.pos.row=4, layout.pos.col=2))
 #export at 1800x3000
+
+
+
+##### Multiple Regression #####
+
+summary(multReg <- lm(composition_diff ~ richness_diff_mean + species_diff_mean + rank_diff_mean + evenness_diff_mean,
+                      data=subset(combinedRACdiff, experiment_year>0)))
 
 
 
