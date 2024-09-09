@@ -8,6 +8,7 @@
 ##### Workspace Set-Up #####
 
 library(vegan)
+library(grid)
 library(tidyverse)
 
 theme_set(theme_bw())
@@ -112,13 +113,99 @@ coreScoresTrtMean <- coreScoresTrt %>%
   ungroup()
 
 #plot NMDS
-ggplot(data=coreScoresTrtMean, aes(x=NMDS1_mean, y=NMDS2_mean, color=treatment2, group=treatment2, label=experiment_year)) +
+
+pplots<-
+  ggplot(data=subset(coreScoresTrtMean, project_name=='pplots'), aes(x=NMDS1_mean, y=NMDS2_mean, color=treatment2, group=treatment2, 
+                                                                     label=experiment_year)) +
   geom_point(size=5) +
   geom_errorbar(aes(ymin=NMDS2_mean-y_err, ymax=NMDS2_mean+y_err)) +
   geom_errorbar(aes(xmin=NMDS1_mean-x_err, xmax=NMDS1_mean+x_err)) +
   scale_color_manual(values=c('black', 'red3'), labels=c('control', 'N')) +
   geom_text(color='white', size=3) +
   xlab('NMDS1') + ylab('NMDS2') +
-  facet_wrap(~project_name) +
-  theme(legend.title=element_blank())
-#export at 1600x1000
+  theme(legend.position='none') +
+  ggtitle("(d) Phosphorus Plots") +
+  xlim(min=-1, max=2.5) +
+  ylim(min=-1.5, max=1.5)
+
+BGP_ub<-
+  ggplot(data=subset(coreScoresTrtMean, project_name=='BGP unburned'), aes(x=NMDS1_mean, y=NMDS2_mean, color=treatment2, group=treatment2, 
+                                                                     label=experiment_year)) +
+  geom_point(size=5) +
+  geom_errorbar(aes(ymin=NMDS2_mean-y_err, ymax=NMDS2_mean+y_err)) +
+  geom_errorbar(aes(xmin=NMDS1_mean-x_err, xmax=NMDS1_mean+x_err)) +
+  scale_color_manual(values=c('black', 'red3'), labels=c('control', 'N')) +
+  geom_text(color='white', size=3) +
+  xlab('') + ylab('') +
+  theme(legend.position='none') +
+  ggtitle("(b) Belowground Plots Unburned") +
+  xlim(min=-1, max=2.5) +
+  ylim(min=-1.5, max=1.5)
+
+BGP_b<-
+  ggplot(data=subset(coreScoresTrtMean, project_name=='BGP burned'), aes(x=NMDS1_mean, y=NMDS2_mean, color=treatment2, group=treatment2, 
+                                                                           label=experiment_year)) +
+  geom_point(size=5) +
+  geom_errorbar(aes(ymin=NMDS2_mean-y_err, ymax=NMDS2_mean+y_err)) +
+  geom_errorbar(aes(xmin=NMDS1_mean-x_err, xmax=NMDS1_mean+x_err)) +
+  scale_color_manual(values=c('black', 'red3'), labels=c('control', 'N')) +
+  geom_text(color='white', size=3) +
+  xlab('') + ylab('NMDS2') +
+  theme(legend.position=c(0.2,0.8), legend.title=element_blank()) +
+  ggtitle("(a) Belowground Plots Burned") +
+  xlim(min=-1, max=2.5) +
+  ylim(min=-1.5, max=1.5)
+
+nutnet<-
+  ggplot(data=subset(coreScoresTrtMean, project_name=='nutnet'), aes(x=NMDS1_mean, y=NMDS2_mean, color=treatment2, group=treatment2, 
+                                                                         label=experiment_year)) +
+  geom_point(size=5) +
+  geom_errorbar(aes(ymin=NMDS2_mean-y_err, ymax=NMDS2_mean+y_err)) +
+  geom_errorbar(aes(xmin=NMDS1_mean-x_err, xmax=NMDS1_mean+x_err)) +
+  scale_color_manual(values=c('black', 'red3'), labels=c('control', 'N')) +
+  geom_text(color='white', size=3) +
+  xlab('NMDS1') + ylab('') +
+  theme(legend.position='none') +
+  ggtitle("(e) Nutrient Network") +
+  xlim(min=-1, max=2.5) +
+  ylim(min=-1.5, max=1.5)
+
+invert<-
+  ggplot(data=subset(coreScoresTrtMean, project_name=='invert'), aes(x=NMDS1_mean, y=NMDS2_mean, color=treatment2, group=treatment2, 
+                                                                         label=experiment_year)) +
+  geom_point(size=5) +
+  geom_errorbar(aes(ymin=NMDS2_mean-y_err, ymax=NMDS2_mean+y_err)) +
+  geom_errorbar(aes(xmin=NMDS1_mean-x_err, xmax=NMDS1_mean+x_err)) +
+  scale_color_manual(values=c('black', 'red3'), labels=c('control', 'N')) +
+  geom_text(color='white', size=3) +
+  xlab('NMDS1') + ylab('') +
+  theme(legend.position='none') +
+  ggtitle("(f) Invertebrate Removal") +
+  xlim(min=-1, max=2.5) +
+  ylim(min=-1.5, max=1.5)
+
+change<-
+  ggplot(data=subset(coreScoresTrtMean, project_name=='ChANGE'), aes(x=NMDS1_mean, y=NMDS2_mean, color=treatment2, group=treatment2, 
+                                                                         label=experiment_year)) +
+  geom_point(size=5) +
+  geom_errorbar(aes(ymin=NMDS2_mean-y_err, ymax=NMDS2_mean+y_err)) +
+  geom_errorbar(aes(xmin=NMDS1_mean-x_err, xmax=NMDS1_mean+x_err)) +
+  scale_color_manual(values=c('black', 'red3'), labels=c('control', 'N')) +
+  geom_text(color='white', size=3) +
+  xlab('') + ylab('') +
+  theme(legend.position='none') +
+  ggtitle("(c) ChANGE") +
+  xlim(min=-1, max=2.5) +
+  ylim(min=-1.5, max=1.5)
+
+
+pushViewport(viewport(layout=grid.layout(2,3)))
+print(BGP_b, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+print(BGP_ub, vp=viewport(layout.pos.row=1, layout.pos.col=2))
+print(change, vp=viewport(layout.pos.row=1, layout.pos.col=3))
+print(pplots, vp=viewport(layout.pos.row=2, layout.pos.col=1))
+print(nutnet, vp=viewport(layout.pos.row=2, layout.pos.col=2))
+print(invert, vp=viewport(layout.pos.row=2, layout.pos.col=3))
+#export at 1600x800
+
+
