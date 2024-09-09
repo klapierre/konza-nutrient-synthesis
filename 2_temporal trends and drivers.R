@@ -53,7 +53,7 @@ barGraphStats <- function(data, variable, byFactorNames) {
 
 #community data
 
-community<-read.csv("Konza_nutrient synthesis_spp comp_20240703.csv") %>%
+community <- read.csv("Konza_nutrient synthesis_spp comp_20240703.csv") %>%
   #consistently name control plots
   mutate(treatment2=ifelse(treatment %in% c('x_x_x', 'u_u_c', 'control', 'N1P0', 'b_u_c', '0'), 'control', ifelse(treatment=='A C'&project_name=='GF Burned', 'control', ifelse(treatment=='P C'&project_name=='GF Unburned', 'control', as.character(treatment))))) %>%
   select(-treatment) %>%
@@ -72,7 +72,8 @@ community<-read.csv("Konza_nutrient synthesis_spp comp_20240703.csv") %>%
   #filter out pre-treatment data
   mutate(pretrt=ifelse(project_name=='pplots'&calendar_year==2002, 1, ifelse(project_name=='nutnet'&calendar_year==2007, 1, ifelse(project_name=='GF Burned'&calendar_year==2014, 1, ifelse(project_name=='GF Unburned'&calendar_year==2014, 1, ifelse(project_name=='ChANGE'&calendar_year==2013, 1, 0)))))) %>%
   filter(pretrt==0) %>%
-  select(-pretrt)
+  select(-pretrt) %>% 
+  mutate(treatment2=ifelse(treatment %in% c('5', 'b_u_n', 'u_u_n', 'N', 'N2P0', 'NPK_x_x'), 'N', treatment))
 
 #list of experiments, treatments, and plots
 plots <- community%>%
@@ -89,6 +90,123 @@ proj <- community%>%
   select(project_name) %>%
   unique() %>% 
   filter(!(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned')))
+
+
+
+##### Richness Figure for Supplement #####
+richness <- community %>% 
+  group_by(project_name, calendar_year, plot_id, treatment, treatment2) %>% 
+  summarise(richness=length(genus_species)) %>% 
+  ungroup() %>% 
+  left_join(experimentYear)
+
+pplots<-
+  ggplot(data=barGraphStats(data=subset(richness, project_name=="pplots" & treatment2 %in% c('control', 'N')), variable="richness", byFactorNames=c("calendar_year", "treatment2")), aes(x=as.numeric(calendar_year), y=mean, group=treatment2)) +
+  geom_line() +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(width=0.2)) +
+  scale_color_manual(name="Treatment",
+                     labels=c("Control", "N"),
+                     values=c("black","red")) +
+  geom_point(aes(color=treatment2), size=5, position=position_dodge(width=0.2)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.position=c(0.1,0.15)) +
+  xlab("Year") +
+  ylab("Plant Species richness") +
+  ggtitle("(d) Phosphorus Plots") +
+  ylim(min=0, max=27)
+
+BGP_ub<-
+  ggplot(data=barGraphStats(data=subset(richness, project_name=="BGP unburned" & treatment2 %in% c('control', 'N')), variable="richness", byFactorNames=c("calendar_year", "treatment2")), aes(x=as.numeric(calendar_year), y=mean, group=treatment2)) +
+  geom_line() +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(width=0.2)) +
+  scale_color_manual(name="Treatment",
+                     labels=c("Control", "N"),
+                     values=c("black","red")) +
+  geom_point(aes(color=treatment2), size=5, position=position_dodge(width=0.2)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.position="none") +
+  xlab("") +
+  ylab("") +
+  ggtitle("(b) Belowground Plots Unburned") +
+  ylim(min=0, max=27)
+
+BGP_b<-
+  ggplot(data=barGraphStats(data=subset(richness, project_name=="BGP burned" & treatment2 %in% c('control', 'N')), variable="richness", byFactorNames=c("calendar_year", "treatment2")), aes(x=as.numeric(calendar_year), y=mean, group=treatment2)) +
+  geom_line() +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(width=0.2)) +
+  scale_color_manual(name="Treatment",
+                     labels=c("Control", "N"),
+                     values=c("black","red")) +
+  geom_point(aes(color=treatment2), size=5, position=position_dodge(width=0.2)) +
+  # geom_vline(xintercept = 1989,linetype="longdash") +
+  # geom_vline(xintercept = 1994) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.position="none") +
+  xlab("") +
+  ylab("Plant Species Richness") +
+  ggtitle("(a) Belowground Plots Burned") +
+  ylim(min=0, max=27)
+
+nutnet<-
+  ggplot(data=barGraphStats(data=subset(richness, project_name=="nutnet" & treatment2 %in% c('control', 'N')), variable="richness", byFactorNames=c("calendar_year", "treatment2")), aes(x=as.numeric(calendar_year), y=mean, group=treatment2)) +
+  geom_line() +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(width=0.2)) +
+  scale_color_manual(name="Treatment",
+                     labels=c("Control", "N"),
+                     values=c("black","red")) +
+  geom_point(aes(color=treatment2), size=5, position=position_dodge(width=0.2)) +
+  # geom_vline(xintercept = 2010,linetype="longdash") +
+  # geom_vline(xintercept = 2012) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.position='none') +
+  xlab("Year") +
+  ylab("") +
+  ggtitle("(e) Nutrient Network") +
+  ylim(min=0, max=27)
+
+invert<-
+  ggplot(data=barGraphStats(data=subset(richness, project_name=="invert" & treatment2 %in% c('control', 'N')), variable="richness", byFactorNames=c("calendar_year", "treatment2")), aes(x=as.numeric(calendar_year), y=mean, group=treatment2)) +
+  geom_line() +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(width=0.2)) +
+  scale_color_manual(name="Treatment",
+                     labels=c("Control", "NPK"),
+                     values=c("black","purple")) +
+  geom_point(aes(color=treatment2), size=5, position=position_dodge(width=0.2)) +
+  # geom_vline(xintercept = 2011,linetype="longdash") +
+  # geom_vline(xintercept = 2013) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.position=c(0.1, 0.2)) +
+  xlab("Year") +
+  ylab("") +
+  ggtitle("(f) Invertebrate Removal") +
+  ylim(min=0, max=27)
+
+change<-
+  ggplot(data=barGraphStats(data=subset(richness, project_name=="ChANGE" & treatment2 %in% c('control', 'N')), variable="richness", byFactorNames=c("calendar_year", "treatment2")), aes(x=as.numeric(calendar_year), y=mean, group=treatment2)) +
+  geom_line() +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(width=0.2)) +
+  scale_color_manual(name="Treatment",
+                     labels=c("Control", "N"),
+                     values=c("black","red")) +
+  geom_point(aes(color=treatment2), size=5, position=position_dodge(width=0.2)) +
+  # geom_vline(xintercept = 2011,linetype="longdash") +
+  # geom_vline(xintercept = 2013) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.position='none') +
+  xlab("") +
+  ylab("") +
+  ggtitle("(c) ChANGE") +
+  ylim(min=0, max=27)
+
+
+pushViewport(viewport(layout=grid.layout(2,3)))
+print(BGP_b, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+print(BGP_ub, vp=viewport(layout.pos.row=1, layout.pos.col=2))
+print(change, vp=viewport(layout.pos.row=1, layout.pos.col=3))
+print(pplots, vp=viewport(layout.pos.row=2, layout.pos.col=1))
+print(nutnet, vp=viewport(layout.pos.row=2, layout.pos.col=2))
+print(invert, vp=viewport(layout.pos.row=2, layout.pos.col=3))
+#export at 2800x1400
 
 
 
@@ -199,115 +317,115 @@ calYearFig <- ggplot(data=subset(compDiffTimeSubset,experiment_year>0 & !(projec
 # black=other combo
 
 pplots<-
-  ggplot(data=subset(compDiff, project_name=="pplots" & treatment2 %in% c('N1P3', 'N2P0', 'N2P3')), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
-  geom_point(aes(color=treatment2), size=5)+
+  ggplot(data=subset(compDiff, project_name=="pplots" & treatment2 %in% c('N1P3', 'N2P0', 'N2P3')), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2)) +
+  geom_point(aes(color=treatment2), size=5) +
   scale_color_manual(name="Treatment",
                      labels=c("P", "N", "NP"),
-                     values=c("blue","red","purple"))+
-  geom_line()+
-  # geom_vline(xintercept = 2004, linetype="longdash")+
-  # geom_vline(xintercept = 2006)+
+                     values=c("blue","red","purple")) +
+  geom_line() +
+  # geom_vline(xintercept = 2004, linetype="longdash") +
+  # geom_vline(xintercept = 2006) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        legend.position=c(0.1,0.88))+
-  xlab("Year")+
-  ylab("Community Difference")+
-  ggtitle("(d) Phosphorus Plots")+
+        legend.position=c(0.1,0.88)) +
+  xlab("Year") +
+  ylab("Community Difference") +
+  ggtitle("(d) Phosphorus Plots") +
   ylim(min=0, max=0.8)
 
 BGP_ub<-
-  ggplot(data=subset(compDiff, project_name=="BGP unburned"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
-  geom_point(aes(color=treatment2), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N", "P"), values=c("red","blue"))+
-  geom_line()+
-  # geom_vline(xintercept = 1989)+
+  ggplot(data=subset(compDiff, project_name=="BGP unburned"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2)) +
+  geom_point(aes(color=treatment2), size=5) +
+  scale_color_manual(name="Treatment",labels=c("N", "P"), values=c("red","blue")) +
+  geom_line() +
+  # geom_vline(xintercept = 1989) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        legend.position=c(0.1,0.9))+
-  xlab("Year")+
-  ylab("Community Difference")+
-  ggtitle("(b) Belowground Plots Unburned")+
+        legend.position=c(0.1,0.9)) +
+  xlab("Year") +
+  ylab("Community Difference") +
+  ggtitle("(b) Belowground Plots Unburned") +
   ylim(min=0, max=0.8)
 
 BGP_b<-
-  ggplot(data=subset(compDiff, project_name=="BGP burned"&treatment2!='u_u_n+p'), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
-  geom_point(aes(color=treatment2), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N", "NP", "P"), values=c("red","purple","blue"))+
-  geom_line()+
-  # geom_vline(xintercept = 1989,linetype="longdash")+
-  # geom_vline(xintercept = 1994)+
+  ggplot(data=subset(compDiff, project_name=="BGP burned"&treatment2!='u_u_n+p'), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2)) +
+  geom_point(aes(color=treatment2), size=5) +
+  scale_color_manual(name="Treatment",labels=c("N", "NP", "P"), values=c("red","purple","blue")) +
+  geom_line() +
+  # geom_vline(xintercept = 1989,linetype="longdash") +
+  # geom_vline(xintercept = 1994) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        legend.position=c(0.1,0.88))+
-  xlab("Year")+
-  ylab("Community Difference")+
-  ggtitle("(a) Belowground Plots Burned")+
+        legend.position=c(0.1,0.88)) +
+  xlab("Year") +
+  ylab("Community Difference") +
+  ggtitle("(a) Belowground Plots Burned") +
   ylim(min=0, max=0.8)
 
 nutnet<-
-  ggplot(data=subset(compDiff, project_name=="nutnet"&treatment2!="fence"&treatment2!="NPK_fence"&treatment2!="K"&treatment2!="PK"&treatment2!="NK"&treatment2!="NPK"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
-  geom_point(aes(color=treatment2), size=5)+
-  scale_color_manual(name="Treatment",labels=c("N","NP","P"), values=c("red", "purple","blue"))+
-  geom_line()+
-  # geom_vline(xintercept = 2010,linetype="longdash")+
-  # geom_vline(xintercept = 2012)+
+  ggplot(data=subset(compDiff, project_name=="nutnet"&treatment2!="fence"&treatment2!="NPK_fence"&treatment2!="K"&treatment2!="PK"&treatment2!="NK"&treatment2!="NPK"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2)) +
+  geom_point(aes(color=treatment2), size=5) +
+  scale_color_manual(name="Treatment",labels=c("N","NP","P"), values=c("red", "purple","blue")) +
+  geom_line() +
+  # geom_vline(xintercept = 2010,linetype="longdash") +
+  # geom_vline(xintercept = 2012) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        legend.position=c(0.1,0.88))+
-  xlab("Year")+
-  ylab("Community Difference")+
-  ggtitle("(e) Nutrient Network")+
+        legend.position=c(0.1,0.88)) +
+  xlab("Year") +
+  ylab("Community Difference") +
+  ggtitle("(e) Nutrient Network") +
   ylim(min=0, max=0.8)
 
 invert<-
-  ggplot(data=subset(compDiff, project_name=="invert"&treatment2!="x_x_caged"&treatment2!="x_insect_caged"&treatment2!="NPK_insect_caged"&treatment2!="NPK_x_caged"&treatment2!="x_insect_x"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
-  geom_point(aes(color=treatment2), size=5)+
-  scale_color_manual(name="Treatment",labels=c("NPK", "NPK+I"), values=c("purple","black"))+
-  geom_line()+
-  # geom_vline(xintercept = 2011,linetype="longdash")+
-  # geom_vline(xintercept = 2013)+
+  ggplot(data=subset(compDiff, project_name=="invert"&treatment2!="x_x_caged"&treatment2!="x_insect_caged"&treatment2!="NPK_insect_caged"&treatment2!="NPK_x_caged"&treatment2!="x_insect_x"), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2)) +
+  geom_point(aes(color=treatment2), size=5) +
+  scale_color_manual(name="Treatment",labels=c("NPK", "NPK+I"), values=c("purple","black")) +
+  geom_line() +
+  # geom_vline(xintercept = 2011,linetype="longdash") +
+  # geom_vline(xintercept = 2013) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        legend.position=c(0.1,0.9))+
-  xlab("Year")+
-  ylab("Community Difference")+
-  ggtitle("(f) Invertebrate Removal")+
+        legend.position=c(0.1,0.9)) +
+  xlab("Year") +
+  ylab("Community Difference") +
+  ggtitle("(f) Invertebrate Removal") +
   ylim(min=0, max=0.8)
 
 change<-
-  ggplot(data=subset(compDiff, project_name=="ChANGE" & treatment2 %in% c('3', '5')), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
-  geom_point(aes(color=treatment2), size=5)+
+  ggplot(data=subset(compDiff, project_name=="ChANGE" & treatment2 %in% c('3', '5')), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2)) +
+  geom_point(aes(color=treatment2), size=5) +
   scale_color_manual(name="Treatment",values=c("pink","red"),
-                     labels=c('N5', 'N10'))+
-  geom_line()+
-  # geom_vline(xintercept = 2011,linetype="longdash")+
-  # geom_vline(xintercept = 2013)+
+                     labels=c('N5', 'N10')) +
+  geom_line() +
+  # geom_vline(xintercept = 2011,linetype="longdash") +
+  # geom_vline(xintercept = 2013) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        legend.position=c(0.1,0.9))+
-  xlab("Year")+
-  ylab("Community Difference")+
-  ggtitle("(c) ChANGE")+
+        legend.position=c(0.1,0.9)) +
+  xlab("Year") +
+  ylab("Community Difference") +
+  ggtitle("(c) ChANGE") +
   ylim(min=0, max=0.8)
 
 # GFburned<-
-#   ggplot(data=subset(compDiff, project_name=="GF Burned"&treatment2 %in% c('A_U','P_U')), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
-#   geom_point(aes(color=treatment2), size=5)+
-#   scale_color_manual(name="Treatment",labels=c('N','N + litter'), values=c("pink","black"))+
-#   geom_line()+
-#   # geom_vline(xintercept = 2011,linetype="longdash")+
-#   # geom_vline(xintercept = 2013)+
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-#   xlab("Year")+
-#   ylab("Community Difference")+
-#   ggtitle("GF Burned")+
+#   ggplot(data=subset(compDiff, project_name=="GF Burned"&treatment2 %in% c('A_U','P_U')), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2)) +
+#   geom_point(aes(color=treatment2), size=5) +
+#   scale_color_manual(name="Treatment",labels=c('N','N + litter'), values=c("pink","black")) +
+#   geom_line() +
+#   # geom_vline(xintercept = 2011,linetype="longdash") +
+#   # geom_vline(xintercept = 2013) +
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+#   xlab("Year") +
+#   ylab("Community Difference") +
+#   ggtitle("GF Burned") +
 #   ylim(min=0, max=0.8)
 # 
 # GFunburned<-
-#   ggplot(data=subset(compDiff, project_name=="GF Unburned"&treatment2 %in% c('A_U','P_U')), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2))+
-#   geom_point(aes(color=treatment2), size=5)+
-#   scale_color_manual(name="Treatment",labels=c('N - litter','N'), values=c("black","pink"))+
-#   geom_line()+
-#   # geom_vline(xintercept = 2011,linetype="longdash")+
-#   # geom_vline(xintercept = 2013)+
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-#   xlab("Year")+
-#   ylab("Community Difference")+
-#   ggtitle("GF Unburned")+
+#   ggplot(data=subset(compDiff, project_name=="GF Unburned"&treatment2 %in% c('A_U','P_U')), aes(x=as.numeric(calendar_year), y=composition_diff, group=treatment2)) +
+#   geom_point(aes(color=treatment2), size=5) +
+#   scale_color_manual(name="Treatment",labels=c('N - litter','N'), values=c("black","pink")) +
+#   geom_line() +
+#   # geom_vline(xintercept = 2011,linetype="longdash") +
+#   # geom_vline(xintercept = 2013) +
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+#   xlab("Year") +
+#   ylab("Community Difference") +
+#   ggtitle("GF Unburned") +
 #   ylim(min=0, max=0.8)
 
 pushViewport(viewport(layout=grid.layout(2,3)))
