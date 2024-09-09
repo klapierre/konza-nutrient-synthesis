@@ -1,3 +1,12 @@
+################################################################################
+##  4_ordinations.R: Identifying patterns community responses
+##  through time and possible drivers.
+##
+##  Authors: Kimberly Komatsu
+################################################################################
+
+##### Workspace Set-Up #####
+
 library(vegan)
 library(tidyverse)
 
@@ -27,167 +36,89 @@ barGraphStats <- function(data, variable, byFactorNames) {
   return(finalSummaryStats)
 }  
 
-setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\konza projects\\Konza Nutrient Synthesis')
+setwd('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\data') #kim's
 
-#get data
-core <- read.csv('Konza_core data_spp comp_PVC021.csv')
+##### Import data #####
 
-#note -- set first year as 1993 for all watersheds!
-coreClean <- core%>%
-  #get a species column
-  unite(genus_species, AB_GENUS, AB_SPECIES)%>%
-  #clean up column names
-  mutate(year=RECYEAR, month=RECMONTH, watershed=WATERSHED, soil=SOILTYPE, cover=Cover)%>%
-  select(year, month, watershed, soil, genus_species, Transect, Plot, cover)%>%
-  #max cover within a year in a plot
-  group_by(year, watershed, soil, genus_species, Transect, Plot)%>%
-  summarise(cover=max(cover))%>%
-  ungroup()%>%
-  #mean cover across plots within a transect
-  group_by(year, watershed, soil, genus_species, Transect)%>%
-  summarise(cover=mean(cover))%>%
-  ungroup()%>%
-  mutate(plot_id=Transect)%>%
-  select(-Transect)%>%
-  filter(year>1992)
+data <- read.csv("Konza_nutrient synthesis_spp comp_20240304.csv") %>% 
+  filter(!(genus_species %in% c('litter', 'litter ', 'bare_ground ', 'NA_NA'))) %>% 
+  mutate(treatment=ifelse(treatment=='N1P0', 'control', treatment))
 
-#get first and last year of data for each watershed
-coreFirstLast <- coreClean%>%
-  group_by(watershed)%>%
-  summarise(max=max(year), min=min(year))%>%
-  merge(coreClean, by=c('watershed'))%>%
-  mutate(max_year=ifelse(max==year, 1, 0), min_year=ifelse(min==year, 1, 0))%>%
-  filter(max_year==1|min_year==1)%>%
-  spread(key=genus_species, value=cover, fill=0)
+exyrs <- read.csv("experiment years.csv")
 
 
-###NMDS for first and last years
-coreNMDS <- metaMDS(coreFirstLast[,9:286])
+##### Calculate Relative Abundances #####
+
+totAbundundance <- data %>%
+  group_by(project_name, plot_id, calendar_year) %>%
+  summarise(tot=sum(abundance)) %>% 
+  ungroup()
+
+relabund <- data %>%
+  left_join(totAbundundance) %>%
+  mutate(relabund=abundance/tot) %>%
+  filter(relabund!="0")
+
+
+##### Determine experiment start date and number of plots #####
+
+yrs <- data %>%
+  select(project_name, calendar_year) %>%
+  unique %>%
+  group_by(project_name) %>%
+  summarise(start_year=min(calendar_year)) %>%
+  ungroup() %>%
+  mutate(pretreatment=ifelse(project_name %in% c('ChANGE', 'pplots', 'nutnet'), 1, 0)) %>% 
+  mutate(start_year=start_year+pretreatment) %>% 
+  select(project_name, start_year)
+
+
+##### Merge cover and year data #####
+dataYear <- relabund %>% 
+  left_join(yrs) %>% 
+  mutate(experiment_year=calendar_year-start_year+1) %>% 
+  filter(experiment_year>0,
+         project_name %in% c('pplots', 'nutnet', 'BGP burned', 'BGP unburned', 'ChANGE', 'invert'),
+         treatment %in% c('control', 'NPK_x_x', 'b_u_n', 'u_u_n', 'N', 'N2P0', '5')) %>% 
+  mutate(treatment2=ifelse(treatment=='control', 'control', 'N')) %>% 
+  select(project_name, plot_id, experiment_year, treatment2, genus_species, relabund) %>% 
+  mutate(genus_species=ifelse(genus_species=='andropogon_scoparius', 'schizachyrium_scoparium',
+                       ifelse(genus_species=='kuhnia_eupatorioides', 'brickellia_eupatorioides',
+                       ifelse(genus_species=='carex_heliophila', 'carex_inops',
+                       ifelse(genus_species=='sporobolus_asper', 'sporobolus_compositus',
+                       ifelse(genus_species=='aster_ericoides', 'symphyotrichum_ericoides',
+                       ifelse(genus_species %in% c('aster_oblongifolia', 'aster_oblongifolius'), 'symphyotrichum_oblongifolium',
+                       ifelse(genus_species=='solidago_canadensis', 'solidago_altissima',
+                       genus_species)))))))) %>% 
+  mutate(genus_species=str_to_lower(genus_species)) %>% 
+  mutate(genus_species=str_replace(genus_species, " ", "_")) %>% 
+  pivot_wider(names_from=genus_species, values_from=relabund, values_fill=0)
+
+
+
+##### NMDS #####
+dataYearNMDS <- metaMDS(dataYear[,5:183])
 
 #gathers NMDS scores
-coreScores <- data.frame(scores(coreNMDS, display='sites'))
+coreScores <- data.frame(scores(dataYearNMDS, display='sites'))
 
-#merge NMDS scores with treatments and filter down to just the watersheds of interest
-coreScoresTrt <- coreFirstLast[,1:9]%>%
-  cbind(coreScores)%>%
-  filter(soil!='s'&watershed!='00fa'&watershed!='00fb'&watershed!='00wa'&watershed!='00wb'&watershed!='0sub'&watershed!='0sua'&watershed!='0spa'&watershed!='0spb'&watershed!='r01a'&watershed!='r01b'&watershed!='r20a'&watershed!='r20b'&watershed!='001a'&watershed!='004f'&watershed!='020a'&watershed!='020d')%>%
-  mutate(burn=ifelse(watershed=='001d'|watershed=='n01a', 1, ifelse(watershed=='002c'|watershed=='002d', 2, ifelse(watershed=='004a'|watershed=='004b'|watershed=='n04a'|watershed=='n04d', 4, 20))))%>%
-  mutate(graze=ifelse(watershed=='n01a'|watershed=='n01b'|watershed=='n04a'|watershed=='n04d'|watershed=='n20a'|watershed=='n20b', 'grazed', 'ungrazed'))%>%
-  unite(trt, graze, burn, remove=F)%>%
-  mutate(time=ifelse(max_year==1, 'last', 'first'))
+#merge NMDS scores with treatments
+coreScoresTrt <- dataYear[,1:4] %>%
+  cbind(coreScores)
+
+coreScoresTrtMean <- coreScoresTrt %>% 
+  group_by(project_name, treatment2, experiment_year) %>% 
+  summarize(NMDS1_mean=mean(NMDS1), x_err=(sd(NMDS1)/sqrt(length(NMDS1))), NMDS2_mean=mean(NMDS2), y_err=(sd(NMDS2)/sqrt(length(NMDS2)))) %>% 
+  ungroup()
 
 #plot NMDS
-ggplot(data=coreScoresTrt, aes(x=NMDS1, y=NMDS2, color=trt, shape=soil)) +
+ggplot(data=coreScoresTrtMean, aes(x=NMDS1_mean, y=NMDS2_mean, color=treatment2, group=treatment2, label=experiment_year)) +
   geom_point(size=5) +
-  scale_color_manual(breaks=c('grazed_1', 'grazed_4', 'grazed_20', 'ungrazed_1', 'ungrazed_2', 'ungrazed_4', 'ungrazed_20'),
-                    values=c('#FBDF41', '#F37F28', '#EB200F', '#66FC5F', '#49B644', '#2C7029', '#102A0E'),
-                    name='Grazing, Burn',
-                    labels=c('Grazed, 1yr', 'Grazed, 20yr', 'Grazed, 4yr', 'Ungrazed, 1yr', 'Ungrazed, 2yr', 'Ungrazed, 20yr', 'Ungrazed, 4yr')) +
-  scale_shape_discrete(name='Soil Type') +
-  facet_wrap(~time)
+  geom_errorbar(aes(ymin=NMDS2_mean-y_err, ymax=NMDS2_mean+y_err)) +
+  geom_errorbar(aes(xmin=NMDS1_mean-x_err, xmax=NMDS1_mean+x_err)) +
+  scale_color_manual(values=c('black', 'red3'), labels=c('control', 'N')) +
+  geom_text(color='white', size=3) +
+  xlab('NMDS1') + ylab('NMDS2') +
+  facet_wrap(~project_name) +
+  theme(legend.title=element_blank())
 #export at 1600x1000
-
-  
-# #plot NMDS with all years in one panel
-# coreScoresMean <- coreScoresTrt%>%
-#   group_by(time, trt, soil)%>%
-#   summarise(NMDS1_mean=mean(NMDS1), NMDS2_mean=mean(NMDS2))
-# 
-# ggplot(data=coreScoresMean, aes(x=NMDS1_mean, y=NMDS2_mean, color=trt, shape=interaction(soil,time))) +
-#   geom_point(size=5) +
-#   scale_color_manual(breaks=c('grazed_1', 'grazed_4', 'grazed_20', 'ungrazed_1', 'ungrazed_2', 'ungrazed_4', 'ungrazed_20'),
-#                      values=c('#FBDF41', '#F37F28', '#EB200F', '#66FC5F', '#49B644', '#2C7029', '#102A0E'),
-#                      name='Grazing, Burn',
-#                      labels=c('Grazed, 1yr', 'Grazed, 20yr', 'Grazed, 4yr', 'Ungrazed, 1yr', 'Ungrazed, 2yr', 'Ungrazed, 20yr', 'Ungrazed, 4yr')) +
-#   scale_shape_manual(name='Soil Type, Year',
-#                      values=c(2,1,17,16))
-
-
-
-###Bray-Curtis Dissimilarity from year 1 through time
-bc_mean_change=data.frame(watershed=c(), soil=c(), year=c(), mean_change=c()) 
-
-coreTrt <- coreClean%>%
-  mutate(treatment=paste(watershed,soil, sep='::'))
-
-coreClean <- coreClean%>%
-    mutate(treatment=paste(watershed,soil, sep='::'))
-
-coreTrtList<-unique(coreTrt$treatment)
-
-###first, get bray curtis dissimilarity values for each year within each experiment between all combinations of plots
-###second, get distance of each plot within a trt to the trt centroid 
-###third: mean_change is the distance between trt and control centriods
-for(i in 1:length(coreTrtList)) {
-  
-  #creates a dataset for each unique year, trt, exp combo
-  subset=coreClean%>%
-    filter(treatment==coreTrtList[i], cover!=0)%>%
-    select(watershed, soil, treatment, year, genus_species, cover, plot_id)
-  
-  #get the name of the first year of watershed
-  minYear<-subset%>%
-    mutate(min=min(year))%>%
-    select(min)%>%
-    unique
-  
-  #transpose data
-  species=subset%>%
-    spread(genus_species, cover, fill=0)
-  
-  #calculate bray-curtis dissimilarities
-  bc=vegdist(species[,6:ncol(species)], method="bray")
-  
-  #calculate distances of each plot to treatment centroid (i.e., dispersion)
-  disp=betadisper(bc, species$year, type="centroid")
-  
-  #getting distances among treatment centroids; these centroids are in BC space, so that's why this uses euclidean distances
-  cent_dist=as.data.frame(as.matrix(vegdist(disp$centroids, method="euclidean"))) 
-  
-  #extracting only the distances we need and adding labels for the comparisons;
-  cent_C_T=data.frame(treatment=coreTrtList[i],
-                      year=row.names(cent_dist),
-                      mean_change=t(cent_dist[names(cent_dist)==minYear$min,]))
-  
-  #not sure why the name didn't work in the previous line of code, so fixing it here
-  names(cent_C_T)[3]="mean_change" 
-  
-  mc<-cent_C_T%>%
-    separate(treatment, c("watershed","soil"), sep="::")
-  
-  #pasting dispersions into the dataframe made for this analysis
-  bc_mean_change=rbind(mc, bc_mean_change)  
-}
-
-
-#filter down to watersheds we are interested in
-mean_change <- bc_mean_change%>%
-  filter(soil!='s'&watershed!='00fa'&watershed!='00fb'&watershed!='00wa'&watershed!='00wb'&watershed!='0sub'&watershed!='0sua'&watershed!='0spa'&watershed!='0spb'&watershed!='r01a'&watershed!='r01b'&watershed!='r20a'&watershed!='r20b'&watershed!='001a'&watershed!='004f'&watershed!='020a'&watershed!='020d')%>%
-  mutate(burn=ifelse(watershed=='001d'|watershed=='n01a', 1, ifelse(watershed=='002c'|watershed=='002d', 2, ifelse(watershed=='004a'|watershed=='004b'|watershed=='n04a'|watershed=='n04d', 4, 20))))%>%
-  mutate(graze=ifelse(watershed=='n01a'|watershed=='n01b'|watershed=='n04a'|watershed=='n04d'|watershed=='n20a'|watershed=='n20b', 'grazed', 'ungrazed'))%>%
-  unite(trt, graze, burn, remove=F)%>%
-  mutate(year=as.numeric(as.character(year)))
-
-#dissimilarity through time (for all watersheds)
-ggplot(data=mean_change, aes(x=year, y=mean_change, color=soil)) +
-  geom_point() +
-  geom_line() +
-  theme(axis.text.x=element_text(angle=90, vjust=0.5, size=16)) +
-  scale_x_continuous(breaks=seq(1983, 2016, 3)) +
-  ylab('Community Change') +
-  xlab('Year') +
-  facet_wrap(~watershed)
-
-#dissimilarity through time (avg response for trts)
-ggplot(data=barGraphStats(data=mean_change, variable="mean_change", byFactorNames=c("trt", "graze", "burn", "year", "soil")), aes(x=year, y=mean, color=soil)) +
-  geom_point() +
-  # geom_errorbar(aes(ymin=mean-se, ymax=mean+se)) +
-  geom_line() +
-  theme(axis.text.x=element_text(angle=90, vjust=0.5, size=16)) +
-  scale_x_continuous(breaks=seq(1983, 2016, 3)) +
-  ylab('Community Change') +
-  xlab('Year') +
-  scale_color_manual(values=c('#FF3300', '#330033')) +
-  facet_grid(graze~burn)
-#export at 1500x1000
-  
