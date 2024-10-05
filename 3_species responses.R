@@ -233,7 +233,7 @@ abund$genus_species2 = factor(abund$genus_species2, levels=c('Schizachyrium scop
                                                              'Ambrosia psilostachya', 'Amorpha canescens', 'Physalis pumila', 'NA'))
 
 ggplot(data=subset(abund, experiment_year<7 & experiment_year!=0 & treatment=='nitrogen' &
-                     !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned', 'ChANGE')) &
+                     !(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned')) &
                      genus_species %in% c('ambrosia_psilostachya', 'amorpha_canescens', 'andropogon_gerardii',
                                           'bouteloua_curtipendula', 'dichanthelium_oligosanthes', 'panicum_virgatum',
                                           'schizachyrium_scoparium', 'sorghastrum_nutans')), 
@@ -242,11 +242,11 @@ ggplot(data=subset(abund, experiment_year<7 & experiment_year!=0 & treatment=='n
   geom_line(linewidth=2) +
   scale_x_continuous(limits = c(1, 6), breaks = seq(from=1, to=6, by=1)) +
   xlab('Experiment Year') +
-  ylab('Relative Abundance') +
-  scale_color_manual(values=c('#f5892a', '#f2cc3a', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  ylab('Absolute Abundance') +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', "grey", '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
   facet_wrap(~genus_species2, scales='free_y') +
   theme(legend.position='none')
-# ggsave(file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 5_sppTrajectoriesAbsAbund_20240703.png', width=17, height=17, units='in', dpi=300, bg='white')
+# ggsave(file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig S4_sppTrajectoriesAbsAbund_20241005.png', width=17, height=17, units='in', dpi=300, bg='white')
 
 
 
@@ -272,23 +272,23 @@ ggplot(data=subset(abund, experiment_year<7 & experiment_year!=0 & treatment=='n
 # ggsave(file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 5_sppTrajectoriesByExptAbsAbund_20240703.png', width=20, height=15, units='in', dpi=300, bg='white')
 
 
-# relative abundance by expt
-domsp$project_name = factor(domsp$project_name, levels=c('BGP burned', 'BGP unburned', 'ChANGE', 'pplots', 'nutnet', 'invert'))
-
-
-ggplot(data=subset(domsp, experiment_year<7 & experiment_year!=0 & treatment=='nitrogen' &
-                     !(project2 %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned')) &
-                     genus_species %in% c('ambrosia_psilostachya', 'amorpha_canescens', 'andropogon_gerardii',
-                                          'bouteloua_curtipendula', 'dichanthelium_oligosanthes', 'panicum_virgatum',
-                                          'schizachyrium_scoparium', 'sorghastrum_nutans')), 
-       aes(x=experiment_year, y=100*mabund, color=genus_species2)) +
-  geom_point(size=5) +
-  geom_line(linewidth=2) +
-  scale_x_continuous(limits = c(1, 6), breaks = seq(from=1, to=6, by=1)) +
-  xlab('Experiment Year') +
-  ylab('Relative Abundance (%)') +
-  scale_color_brewer(palette = "Paired") +
-  # scale_color_manual(values=c('#f5892a', '#f2cc3a', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
-  facet_wrap(~project2, scales='free_y') +
-  theme(legend.position='bottom')
-# ggsave(file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 5_sppTrajectoriesByExptRelAbund_20240703.png', width=20, height=15, units='in', dpi=300, bg='white')
+# # relative abundance by expt
+# domsp$project_name = factor(domsp$project_name, levels=c('BGP burned', 'BGP unburned', 'ChANGE', 'pplots', 'nutnet', 'invert'))
+# 
+# 
+# ggplot(data=subset(domsp, experiment_year<7 & experiment_year!=0 & treatment=='nitrogen' &
+#                      !(project2 %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned')) &
+#                      genus_species %in% c('ambrosia_psilostachya', 'amorpha_canescens', 'andropogon_gerardii',
+#                                           'bouteloua_curtipendula', 'dichanthelium_oligosanthes', 'panicum_virgatum',
+#                                           'schizachyrium_scoparium', 'sorghastrum_nutans')), 
+#        aes(x=experiment_year, y=100*mabund, color=genus_species2)) +
+#   geom_point(size=5) +
+#   geom_line(linewidth=2) +
+#   scale_x_continuous(limits = c(1, 6), breaks = seq(from=1, to=6, by=1)) +
+#   xlab('Experiment Year') +
+#   ylab('Relative Abundance (%)') +
+#   scale_color_brewer(palette = "Paired") +
+#   # scale_color_manual(values=c('#f5892a', '#f2cc3a', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+#   facet_wrap(~project2, scales='free_y') +
+#   theme(legend.position='bottom')
+# # ggsave(file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 5_sppTrajectoriesByExptRelAbund_20240703.png', width=20, height=15, units='in', dpi=300, bg='white')

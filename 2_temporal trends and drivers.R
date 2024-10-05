@@ -91,6 +91,9 @@ proj <- community%>%
   unique() %>% 
   filter(!(project_name %in% c('GF Burned', 'GF Unburned', 'ukulinga_annual', 'ukulinga_four', 'ukulinga_unburned')))
 
+#experiment year
+experimentYear <- read.csv("experiment years.csv")
+
 
 
 ##### Richness Figure for Supplement #####
@@ -266,9 +269,6 @@ for(i in 1:length(proj$project_name)) {
 
 
 ##### Compositional Difference Figure -- All Experiments Together #####
-
-# Experiment year information
-experimentYear <- read.csv('experiment years.csv')
 
 compDiffTime <- compDiff%>%
   left_join(experimentYear)
@@ -447,7 +447,9 @@ compDiffChange <- compDiffTime%>%
   group_by(project_name, treatment2) %>%
   mutate(comp_diff_change=(composition_diff-lag(composition_diff, order_by=experiment_year))) %>%
   ungroup() %>%
-  mutate(burn_regime=ifelse(project_name %in% c('BGP burned', 'ChANGE', 'GF Burned'), 'annual', ifelse(project_name %in% c('BGP unburned', 'GF Unburned'), 'unburned', 'two-year')))
+  mutate(burn_regime=ifelse(project_name %in% c('BGP burned', 'ChANGE', 'GF Burned'), 'annual',
+                     ifelse(project_name %in% c('BGP unburned', 'GF Unburned'), 'unburned', 
+                            'two-year')))
 
 # write.csv(compDiffChange, 'Konza_nutrient synthesis_change in yearly diff_20240703.csv')
 
