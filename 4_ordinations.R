@@ -82,7 +82,7 @@ dataYear <- relabund %>%
          project_name %in% c('pplots', 'nutnet', 'BGP burned', 'BGP unburned', 'ChANGE', 'invert'),
          treatment %in% c('control', 'NPK_x_x', 'b_u_n', 'u_u_n', 'N', 'N2P0', '5')) %>% 
   mutate(treatment2=ifelse(treatment=='control', 'control', 'N')) %>% 
-  select(project_name, plot_id, experiment_year, treatment2, genus_species, relabund) %>% 
+  select(project_name, plot_id, experiment_year, calendar_year, treatment2, genus_species, relabund) %>% 
   mutate(genus_species=ifelse(genus_species=='andropogon_scoparius', 'schizachyrium_scoparium',
                        ifelse(genus_species=='kuhnia_eupatorioides', 'brickellia_eupatorioides',
                        ifelse(genus_species=='carex_heliophila', 'carex_inops',
@@ -98,13 +98,13 @@ dataYear <- relabund %>%
 
 
 ##### NMDS #####
-dataYearNMDS <- metaMDS(dataYear[,5:183])
+dataYearNMDS <- metaMDS(dataYear[,6:183])
 
 #gathers NMDS scores
 coreScores <- data.frame(scores(dataYearNMDS, display='sites'))
 
 #merge NMDS scores with treatments
-coreScoresTrt <- dataYear[,1:4] %>%
+coreScoresTrt <- dataYear[,1:5] %>%
   cbind(coreScores)
 
 coreScoresTrtMean <- coreScoresTrt %>% 
@@ -207,5 +207,3 @@ print(pplots, vp=viewport(layout.pos.row=2, layout.pos.col=1))
 print(nutnet, vp=viewport(layout.pos.row=2, layout.pos.col=2))
 print(invert, vp=viewport(layout.pos.row=2, layout.pos.col=3))
 #export at 1600x800
-
-
