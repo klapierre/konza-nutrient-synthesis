@@ -243,10 +243,10 @@ ggplot(data=subset(abund, experiment_year<7 & experiment_year!=0 & treatment=='n
   scale_x_continuous(limits = c(1, 6), breaks = seq(from=1, to=6, by=1)) +
   xlab('Experiment Year') +
   ylab('Absolute Abundance') +
-  scale_color_manual(values=c('#f5892a', '#f2cc3a', "grey", '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', "#686868", '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
   facet_wrap(~genus_species2, scales='free_y') +
   theme(legend.position='none')
-# ggsave(file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig S4_sppTrajectoriesAbsAbund_20241005.png', width=17, height=17, units='in', dpi=300, bg='white')
+# ggsave(file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig S4_sppTrajectoriesAbsAbund_20241118.png', width=17, height=17, units='in', dpi=300, bg='white')
 
 
 

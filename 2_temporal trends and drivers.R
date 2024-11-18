@@ -285,11 +285,11 @@ exptYearFig <- ggplot(data=subset(compDiffTimeSubset,experiment_year>0 & !(proje
   geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
   xlab('Experiment Year') +
   ylab('Community Difference') +
-  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', '#686868', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
   ylim(0,0.8) +
   scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
   theme(legend.position='none')
-# ggsave(exptYearFig, file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 1b_temporalTrajectories_20240703.png', width=7.5, height=7.5, units='in', dpi=300, bg='white')
+# ggsave(exptYearFig, file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 1b_temporalTrajectories_20241118.png', width=7.5, height=7.5, units='in', dpi=300, bg='white')
 
 # Figure by calendar year
 calYearFig <- ggplot(data=subset(compDiffTimeSubset,experiment_year>0 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=calendar_year, y=composition_diff, color=project_name)) +
@@ -302,10 +302,10 @@ calYearFig <- ggplot(data=subset(compDiffTimeSubset,experiment_year>0 & !(projec
   xlab('Calendar Year') +
   ylab('Community Difference') +
   scale_color_manual(name='Experiment',
-                     values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), 
+                     values=c('#f5892a', '#f2cc3a', '#686868', '#39869e', '#54c4b7', '#db4c23'), 
                      labels=c("BGP Burned", 'BGP Unburned', 'ChANGE', 'Invert', 'NutNet', 'PPlots')) +
   ylim(0,0.8) 
-# ggsave(calYearFig, file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 1a_temporalTrajectories_20240703.png', width=17, height=7.5, units='in', dpi=300, bg='white')
+# ggsave(calYearFig, file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 1a_temporalTrajectories_20241118.png', width=17, height=7.5, units='in', dpi=300, bg='white')
 
 
 
@@ -500,15 +500,16 @@ exptYearGainsFig <- ggplot(data=subset(combinedRACdiff, experiment_year>0),
                            aes(x=experiment_year, y=richness_diff_mean, color=project_name)) +
   geom_hline(yintercept=0, color='black') +
   geom_point(size=5) +
+  geom_errorbar(aes(ymin=richness_diff_mean-richness_se, ymax=richness_diff_mean+richness_se), width=0.2) +
   geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
   xlab('Experiment Year') +
   ylab('Proportion Richness Difference') +
-  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', '#686868', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
   # ylim(-0.25,0.25) +
   scale_x_continuous(limits = c(0, 20), breaks = seq(from=0, to=20, by=5)) +
   theme(legend.position='none')
 
-#test gains correlation
+#test richness correlation
 with(subset(combinedRACdiff, experiment_year>0), cor.test(richness_diff_mean, composition_diff, method = "pearson", use = "complete.obs"))
 
 exptYearGainsByCommFig <- ggplot(data=subset(combinedRACdiff, experiment_year>0), aes(x=richness_diff_mean, y=composition_diff)) +
@@ -517,7 +518,7 @@ exptYearGainsByCommFig <- ggplot(data=subset(combinedRACdiff, experiment_year>0)
   geom_point(size=5, aes(color=project_name)) +
   xlab('Proportional Richness Difference') +
   ylab('Composition Difference') +
-  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', '#686868', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
   # ylim(0,0.6) +
   # scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
   theme(legend.position='none')
@@ -527,10 +528,11 @@ exptYearLossesFig <- ggplot(data=subset(combinedRACdiff, experiment_year>0),
                             aes(x=experiment_year, y=species_diff_mean, color=project_name)) +
   # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
   geom_point(size=5) +
+  geom_errorbar(aes(ymin=species_diff_mean-species_se, ymax=species_diff_mean+species_se), width=0.2) +
   geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
   xlab('Experiment Year') +
   ylab('Proportional Species Difference') +
-  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', '#686868', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
   # ylim(0,0.6) +
   scale_x_continuous(limits = c(0, 20), breaks = seq(from=0, to=20, by=5)) +
   theme(legend.position='none')
@@ -544,7 +546,7 @@ exptYearLossesByCommFig <- ggplot(data=subset(combinedRACdiff, experiment_year>0
   # geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
   xlab('Proportional Species Difference') +
   ylab('Composition Difference') +
-  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', '#686868', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
   # ylim(0,0.6) +
   # scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
   theme(legend.position='none')
@@ -554,10 +556,11 @@ exptYearLossesByCommFig <- ggplot(data=subset(combinedRACdiff, experiment_year>0
 exptYearRankFig <- ggplot(data=subset(combinedRACdiff, experiment_year>0), aes(x=experiment_year, y=rank_diff_mean, color=project_name)) +
   # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
   geom_point(size=5) +
+  geom_errorbar(aes(ymin=rank_diff_mean-rank_se, ymax=rank_diff_mean+rank_se), width=0.2) +
   geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
   xlab('Experiment Year') +
   ylab('Rank Difference') +
-  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', '#686868', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
   # ylim(0,0.3) +
   scale_x_continuous(limits = c(0, 20), breaks = seq(from=0, to=20, by=5)) +
   theme(legend.position='none')
@@ -571,7 +574,7 @@ exptYearRankByCommFig <- ggplot(data=subset(combinedRACdiff, experiment_year>0),
   geom_point(size=5, aes(color=project_name)) +
   xlab('Rank Difference') +
   ylab('Composition Difference') +
-  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', '#686868', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
   # ylim(0,0.6) +
   # scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
   theme(legend.position='none')
@@ -582,10 +585,11 @@ exptYearEvenFig <- ggplot(data=subset(combinedRACdiff, experiment_year>0), aes(x
   # geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
   geom_hline(yintercept=0, color='black') +
   geom_point(size=5) +
+  geom_errorbar(aes(ymin=evenness_diff_mean-evenness_se, ymax=evenness_diff_mean+evenness_se), width=0.2) +
   geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
   xlab('Experiment Year') +
   ylab('Evenness Difference') +
-  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', '#686868', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
   # ylim(-0.1,0.1) +
   scale_x_continuous(limits = c(0, 20), breaks = seq(from=0, to=20, by=5)) +
   theme(legend.position='none')
@@ -599,7 +603,7 @@ exptYearEvenByCommFig <- ggplot(data=subset(combinedRACdiff, experiment_year>0),
   geom_point(size=5) +
   xlab('Evenness Difference') +
   ylab('Composition Difference') +
-  scale_color_manual(values=c('#f5892a', '#f2cc3a', 'grey', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', '#686868', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
   # ylim(0,0.6) +
   # scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
   theme(legend.position='none')
@@ -659,13 +663,13 @@ ggplot(herbivoresDiff, aes(x=grasshopper, y=comp_diff_change, color=project_name
   ylab('Yearly Change in\nCompositional Difference') + xlab('Grasshopper Abundance') +
   theme(legend.position='none') +
   scale_color_manual(name='Experiment',
-                     values=c('grey', '#39869e', '#54c4b7', '#db4c23'), 
+                     values=c('#686868', '#39869e', '#54c4b7', '#db4c23'), 
                      labels=c('ChANGE', 'Invert', 'NutNet', 'PPlots')) +
   xlim(c(0,450)) +
-  geom_hline(yintercept=-0.1139534  , linetype='dashed', size=2) + #5th quantile composition difference
-  geom_hline(yintercept=0.2442750 , linetype='dashed', size=2) + #95th quantile composition difference
-  geom_vline(xintercept=38.1500, linetype='dashed', size=2) + #5th quantile grasshopper abundance
-  geom_vline(xintercept=411.0875, linetype='dashed', size=2) + #95th quantile grasshopper abundance 
+  geom_hline(yintercept=-0.1139534  , linetype='dashed', size=1) + #5th quantile composition difference
+  geom_hline(yintercept=0.2442750 , linetype='dashed', size=1) + #95th quantile composition difference
+  geom_vline(xintercept=38.1500, linetype='dashed', size=1) + #5th quantile grasshopper abundance
+  geom_vline(xintercept=411.0875, linetype='dashed', size=1) + #95th quantile grasshopper abundance 
   geom_point(size=10)
 #export 1200x800
 
@@ -679,13 +683,13 @@ ggplot(herbivoresDiff, aes(x=mammal, y=comp_diff_change, color=project_name)) +
   ylab('Yearly Change in\nCompositional Difference') + xlab('Small Mammal Abundance') +
   theme(legend.position='none') +
   scale_color_manual(name='Experiment',
-                     values=c('grey', '#39869e', '#54c4b7', '#db4c23'), 
+                     values=c('#686868', '#39869e', '#54c4b7', '#db4c23'), 
                      labels=c('ChANGE', 'Invert', 'NutNet', 'PPlots')) +
   xlim(c(0,35)) +
-  geom_hline(yintercept=-0.1139534  , linetype='dashed',size=2) + #5th quantile composition difference
-  geom_hline(yintercept=0.2442750 , linetype='dashed',size=2) + #95th quantile composition difference
-  geom_vline(xintercept=5.5750, linetype='dashed',size=2) + #5th quantile small mammal abundance
-  geom_vline(xintercept=29.0375, linetype='dashed',size=2) + #95th quantile small mammal abundance
+  geom_hline(yintercept=-0.1139534  , linetype='dashed',size=1) + #5th quantile composition difference
+  geom_hline(yintercept=0.2442750 , linetype='dashed',size=1) + #95th quantile composition difference
+  geom_vline(xintercept=5.5750, linetype='dashed',size=1) + #5th quantile small mammal abundance
+  geom_vline(xintercept=29.0375, linetype='dashed',size=1) + #95th quantile small mammal abundance
   geom_point(size=10)
 #export 1200x800
 
@@ -715,13 +719,13 @@ ggplot(precipDiff, aes(x=year_precip, y=comp_diff_change, color=project_name)) +
   ylab('Yearly Change in\nCompositional Difference') + xlab('Annual Precipitation (mm)') +
   theme(legend.position='none') +
   scale_color_manual(name='Experiment',
-                     values=c('grey', '#39869e', '#54c4b7', '#db4c23'), 
+                     values=c('#686868', '#39869e', '#54c4b7', '#db4c23'), 
                      labels=c('ChANGE', 'Invert', 'NutNet', 'PPlots')) +
   xlim(c(400,1350)) +
-  geom_hline(yintercept=-0.1139534  , linetype='dashed',size=2) + #5th quantile composition difference
-  geom_hline(yintercept=0.2442750 , linetype='dashed',size=2) + #95th quantile composition difference
-  geom_vline(xintercept=516, linetype='dashed',size=2) + #5th quantile annual precip
-  geom_vline(xintercept=1119, linetype='dashed',size=2) + #95th quantile annual precip 
+  geom_hline(yintercept=-0.1139534  , linetype='dashed',size=1) + #5th quantile composition difference
+  geom_hline(yintercept=0.2442750 , linetype='dashed',size=1) + #95th quantile composition difference
+  geom_vline(xintercept=516, linetype='dashed',size=1) + #5th quantile annual precip
+  geom_vline(xintercept=1119, linetype='dashed',size=1) + #95th quantile annual precip 
   geom_point(size=10)
 #export 1200x800
 
@@ -734,14 +738,14 @@ ggplot(precipDiff, aes(x=year_precip)) +
 ggplot(precipDiff, aes(x=grow_precip, y=comp_diff_change, color=project_name)) +
   ylab('Yearly Change in\nCompositional Difference') + xlab('Growing Season Precipitation (mm)') +
   scale_color_manual(name='Experiment',
-                     values=c('grey', '#39869e', '#54c4b7', '#db4c23'), 
+                     values=c('#686868', '#39869e', '#54c4b7', '#db4c23'), 
                      labels=c('ChANGE', 'Invert', 'NutNet', 'PPlots')) +
   theme(legend.position='none') +
   xlim(c(300,800)) +
-  geom_hline(yintercept=-0.1139534  , linetype='dashed',size=2) + #5th quantile composition difference
-  geom_hline(yintercept=0.2442750 , linetype='dashed',size=2) + #95th quantile composition difference
-  geom_vline(xintercept=305, linetype='dashed',size=2) + #5th quantile growing season precip
-  geom_vline(xintercept=690, linetype='dashed',size=2) + #95th quantile growing season precip
+  geom_hline(yintercept=-0.1139534  , linetype='dashed',size=1) + #5th quantile composition difference
+  geom_hline(yintercept=0.2442750 , linetype='dashed',size=1) + #95th quantile composition difference
+  geom_vline(xintercept=305, linetype='dashed',size=1) + #5th quantile growing season precip
+  geom_vline(xintercept=690, linetype='dashed',size=1) + #95th quantile growing season precip
   geom_point(size=10) 
 #export 1200x800
 
