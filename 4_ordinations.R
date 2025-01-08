@@ -207,3 +207,39 @@ print(pplots, vp=viewport(layout.pos.row=2, layout.pos.col=1))
 print(nutnet, vp=viewport(layout.pos.row=2, layout.pos.col=2))
 print(invert, vp=viewport(layout.pos.row=2, layout.pos.col=3))
 #export at 1600x800
+
+
+##### single plot for first and final year, N addition only #####
+coreScoresTrtMeanNonly <- coreScoresTrtMean %>% 
+  group_by(project_name) %>% 
+  mutate(keep=ifelse(experiment_year==min(experiment_year), 'start',
+              ifelse(experiment_year==max(experiment_year), 'end', 'middle'))) %>% 
+  ungroup() %>% 
+  filter(keep=='end')
+
+NMDScombinedFig <- ggplot(data=coreScoresTrtMeanNonly, 
+       aes(x=NMDS1_mean, y=NMDS2_mean, color=project_name, group=treatment2)) +
+  geom_point(size=5) +
+  geom_errorbar(aes(ymin=NMDS2_mean-y_err, ymax=NMDS2_mean+y_err), width=0.02) +
+  geom_errorbar(aes(xmin=NMDS1_mean-x_err, xmax=NMDS1_mean+x_err), width=0.02) +
+  scale_color_manual(values=c('#f5892a', '#f2cc3a', '#686868', '#39869e', '#54c4b7', '#db4c23'),
+                     labels=c('BGP Burned', 'BGP Unburned', 'ChANGE', 'Invert', 'NutNet', 'PPlots')) +
+  # geom_text(color='black', size=3) +
+  xlab('NMDS1') + ylab('NMDS2') +
+  theme(legend.position=c(0.17,0.88), legend.title=element_blank()) +
+  # xlim(min=-1, max=2.5) +
+  # ylim(min=-1.5, max=1.5) 
+  geom_segment(x=0.3107672, xend=2.13234452, y=-0.29681054, yend=0.43714202, 
+               arrow=arrow(type='closed', length=unit(0.02, "npc")), color='black') + #BGP burned #f5892a
+  geom_segment(x=1.5638310, xend=1.80415726, y=0.55707143, yend=0.33578529, 
+               arrow=arrow(type='closed', length=unit(0.02, "npc")), color='black') + #BGP unburned
+  geom_segment(x=-0.1589214, xend=-0.54187134, y=-0.39746504, yend=-0.51749001, 
+               arrow=arrow(type='closed', length=unit(0.02, "npc")), color='black') + #ChANGE
+  geom_segment(x=-0.3142156, xend=0.45248747, y=0.60356896, yend=-0.07327285, 
+               arrow=arrow(type='closed', length=unit(0.02, "npc")), color='black') + #Invert
+  geom_segment(x=-0.4321114, xend=-0.46987265, y=0.62175717, yend=-0.05017150, 
+               arrow=arrow(type='closed', length=unit(0.02, "npc")), color='black') + #NutNet
+  geom_segment(x=-0.2496861, xend=-0.21767465, y=0.10334450, yend=-0.39144485, 
+               arrow=arrow(type='closed', length=unit(0.02, "npc")), color='black')  #PPlots
+#export at 800x800
+# ggsave(NMDScombinedFig, file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig3_NMDS_all_20250108.png', width=8, height=8, units='in', dpi=300, bg='white')
