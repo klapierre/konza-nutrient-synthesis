@@ -755,3 +755,116 @@ ggplot(precipDiff, aes(x=grow_precip)) +
   xlim(c(300,800))
 #export 1200x250
 
+
+
+###### Lag Effects -- Comparing Difference to Covariates from Previous Year (herbivores, weather) #####
+
+### import drivers data ###
+drivers2 <- read.csv('Konza_nutrient synthesis_drivers_20240304.csv') %>% 
+  mutate(calendar_year_lag=calendar_year-1) %>%
+  select(-calendar_year) %>% 
+  rename(calendar_year=calendar_year_lag)
+
+### comparing to herbivores ###
+herbivoresDiff <- drivers2 %>%
+  left_join(compDiffEarly, multiple='all') %>%
+  filter(!is.na(comp_diff_change))
+
+#models
+with(herbivoresDiff, cor.test(grasshopper, comp_diff_change, method = "pearson", use = "complete.obs"))
+with(herbivoresDiff, cor.test(mammal, comp_diff_change, method = "pearson", use = "complete.obs"))
+
+#figures
+
+ggplot(herbivoresDiff, aes(x=grasshopper, y=comp_diff_change, color=project_name)) +
+  ylab('Yearly Change in\nCompositional Difference') + xlab('Previous Year Grasshopper Abundance') +
+  theme(legend.position='none') +
+  scale_color_manual(name='Experiment',
+                     values=c('#686868', '#39869e', '#54c4b7', '#db4c23'), 
+                     labels=c('ChANGE', 'Invert', 'NutNet', 'PPlots')) +
+  xlim(c(0,450)) +
+  geom_hline(yintercept=-0.1139534  , linetype='dashed', size=1) + #5th quantile composition difference
+  geom_hline(yintercept=0.2442750 , linetype='dashed', size=1) + #95th quantile composition difference
+  geom_vline(xintercept=38.1500, linetype='dashed', size=1) + #5th quantile grasshopper abundance
+  geom_vline(xintercept=411.0875, linetype='dashed', size=1) + #95th quantile grasshopper abundance 
+  geom_point(size=10)
+#export 1200x800
+
+ggplot(herbivoresDiff, aes(x=mammal, y=comp_diff_change, color=project_name)) +
+  ylab('Yearly Change in\nCompositional Difference') + xlab('Previous Year Small Mammal Abundance') +
+  theme(legend.position='none') +
+  scale_color_manual(name='Experiment',
+                     values=c('#686868', '#39869e', '#54c4b7', '#db4c23'), 
+                     labels=c('ChANGE', 'Invert', 'NutNet', 'PPlots')) +
+  xlim(c(0,35)) +
+  geom_hline(yintercept=-0.1139534  , linetype='dashed',size=1) + #5th quantile composition difference
+  geom_hline(yintercept=0.2442750 , linetype='dashed',size=1) + #95th quantile composition difference
+  geom_vline(xintercept=5.5750, linetype='dashed',size=1) + #5th quantile small mammal abundance
+  geom_vline(xintercept=29.0375, linetype='dashed',size=1) + #95th quantile small mammal abundance
+  geom_point(size=10)
+#export 1200x800
+
+
+### comparing to weather data ###
+precipDiff <- drivers2 %>%
+  left_join(compDiffEarly, multiple='all') %>%
+  filter(!is.na(comp_diff_change))
+
+#models
+with(precipDiff, cor.test(year_precip, comp_diff_change, method = "pearson", use = "complete.obs"))
+with(precipDiff, cor.test(grow_precip, comp_diff_change, method = "pearson", use = "complete.obs"))
+
+#figures
+
+ggplot(precipDiff, aes(x=year_precip, y=comp_diff_change, color=project_name)) +
+  ylab('Yearly Change in\nCompositional Difference') + xlab('Previous Year Annual Precipitation (mm)') +
+  theme(legend.position='none') +
+  scale_color_manual(name='Experiment',
+                     values=c('#686868', '#39869e', '#54c4b7', '#db4c23'), 
+                     labels=c('ChANGE', 'Invert', 'NutNet', 'PPlots')) +
+  xlim(c(400,1350)) +
+  geom_hline(yintercept=-0.1139534  , linetype='dashed',size=1) + #5th quantile composition difference
+  geom_hline(yintercept=0.2442750 , linetype='dashed',size=1) + #95th quantile composition difference
+  geom_vline(xintercept=516, linetype='dashed',size=1) + #5th quantile annual precip
+  geom_vline(xintercept=1119, linetype='dashed',size=1) + #95th quantile annual precip 
+  geom_point(size=10)
+#export 1200x800
+
+ggplot(precipDiff, aes(x=grow_precip, y=comp_diff_change, color=project_name)) +
+  ylab('Yearly Change in\nCompositional Difference') + xlab('Previous Year Growing Season Precipitation (mm)') +
+  scale_color_manual(name='Experiment',
+                     values=c('#686868', '#39869e', '#54c4b7', '#db4c23'), 
+                     labels=c('ChANGE', 'Invert', 'NutNet', 'PPlots')) +
+  theme(legend.position='none') +
+  xlim(c(300,800)) +
+  geom_hline(yintercept=-0.1139534  , linetype='dashed',size=1) + #5th quantile composition difference
+  geom_hline(yintercept=0.2442750 , linetype='dashed',size=1) + #95th quantile composition difference
+  geom_vline(xintercept=305, linetype='dashed',size=1) + #5th quantile growing season precip
+  geom_vline(xintercept=690, linetype='dashed',size=1) + #95th quantile growing season precip
+  geom_point(size=10) 
+#export 1200x800
+
+
+### Two-Year Lag ###
+drivers3 <- read.csv('Konza_nutrient synthesis_drivers_20240304.csv') %>% 
+  mutate(calendar_year_lag=calendar_year-2) %>%
+  select(-calendar_year) %>% 
+  rename(calendar_year=calendar_year_lag)
+
+### comparing to herbivores ###
+herbivoresDiff <- drivers3 %>%
+  left_join(compDiffEarly, multiple='all') %>%
+  filter(!is.na(comp_diff_change))
+
+#models
+with(herbivoresDiff, cor.test(grasshopper, comp_diff_change, method = "pearson", use = "complete.obs"))
+with(herbivoresDiff, cor.test(mammal, comp_diff_change, method = "pearson", use = "complete.obs"))
+
+### comparing to weather data ###
+precipDiff <- drivers3 %>%
+  left_join(compDiffEarly, multiple='all') %>%
+  filter(!is.na(comp_diff_change))
+
+#models
+with(precipDiff, cor.test(year_precip, comp_diff_change, method = "pearson", use = "complete.obs"))
+with(precipDiff, cor.test(grow_precip, comp_diff_change, method = "pearson", use = "complete.obs"))
