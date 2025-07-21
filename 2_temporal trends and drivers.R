@@ -16,7 +16,6 @@ library(ggthemes)
 library(tidyverse)
 
 setwd('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\data') #kim's
-# setwd("~/Dropbox/Konza Nutrient Synthesis") #meghan's
 
 theme_set(theme_bw())
 theme_update(axis.title.x=element_text(size=30, vjust=-0.35), axis.text.x=element_text(size=25),
@@ -280,23 +279,24 @@ compDiffTimeSubset <- compDiffTime%>%
 
 # Figure by expt year
 exptYearFig <- ggplot(data=subset(compDiffTimeSubset,experiment_year>0 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=experiment_year, y=composition_diff, color=project_name)) +
-  geom_rect(aes(xmin = 2.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
+  geom_rect(aes(xmin = 0.5, xmax = 5.5, ymin = -Inf, ymax = Inf), fill="grey", color=NA, alpha=0.01) + #all
   geom_point(size=5) +
   geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
   xlab('Experiment Year') +
   ylab('Community Difference') +
   scale_color_manual(values=c('#f5892a', '#f2cc3a', '#686868', '#39869e', '#54c4b7', '#db4c23'), name=element_blank()) +
   ylim(0,0.8) +
-  scale_x_continuous(limits = c(1, 10), breaks = seq(from=2, to=10, by=2)) +
+  scale_x_continuous(limits = c(0, 10), breaks = seq(from=2, to=10, by=2)) +
+  coord_cartesian(xlim=c(1,10)) +
   theme(legend.position='none')
-# ggsave(exptYearFig, file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 1b_temporalTrajectories_20241118.png', width=7.5, height=7.5, units='in', dpi=300, bg='white')
+# ggsave(exptYearFig, file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 1b_temporalTrajectories_20250721.png', width=7.5, height=7.5, units='in', dpi=300, bg='white')
 
 # Figure by calendar year
 calYearFig <- ggplot(data=subset(compDiffTimeSubset,experiment_year>0 & !(project_name %in% c('GF Burned', 'GF Unburned'))), aes(x=calendar_year, y=composition_diff, color=project_name)) +
   geom_rect(aes(xmin = 1988, xmax = 1995, ymin = -Inf, ymax = Inf), fill="#f2cc3a", color=NA, alpha=0.006) + #bgp
-  geom_rect(aes(xmin = 2004.5, xmax = 2007.5, ymin = -Inf, ymax = Inf), fill="#db4c23", color=NA, alpha=0.006) + #pplots
-  geom_rect(aes(xmin = 2010.5, xmax = 2012.5, ymin = -Inf, ymax = Inf), fill="#54c4b7", color=NA, alpha=0.006) + #nutnet
-  geom_rect(aes(xmin = 2011.5, xmax = 2013.5, ymin = -Inf, ymax = Inf), fill="#39869e", color=NA, alpha=0.006) + #invert
+  geom_rect(aes(xmin = 2002.5, xmax = 2007.5, ymin = -Inf, ymax = Inf), fill="#db4c23", color=NA, alpha=0.006) + #pplots
+  geom_rect(aes(xmin = 2007.5, xmax = 2012.5, ymin = -Inf, ymax = Inf), fill="#54c4b7", color=NA, alpha=0.006) + #nutnet
+  geom_rect(aes(xmin = 2009.5, xmax = 2013.5, ymin = -Inf, ymax = Inf), fill="#39869e", color=NA, alpha=0.006) + #invert
   geom_point(size=5) +
   geom_line(aes(group=interaction(project_name,treatment2)), size=2) +
   xlab('Calendar Year') +
@@ -305,7 +305,7 @@ calYearFig <- ggplot(data=subset(compDiffTimeSubset,experiment_year>0 & !(projec
                      values=c('#f5892a', '#f2cc3a', '#686868', '#39869e', '#54c4b7', '#db4c23'), 
                      labels=c("BGP Burned", 'BGP Unburned', 'ChANGE', 'Invert', 'NutNet', 'PPlots')) +
   ylim(0,0.8) 
-# ggsave(calYearFig, file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 1a_temporalTrajectories_20241118.png', width=17, height=7.5, units='in', dpi=300, bg='white')
+# ggsave(calYearFig, file='C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\konza projects\\Konza Nutrient Synthesis\\figures\\Fig 1a_temporalTrajectories_20250721.png', width=17, height=7.5, units='in', dpi=300, bg='white')
 
 
 
@@ -455,12 +455,13 @@ compDiffChange <- compDiffTime%>%
 
 
 
-##### Burn Effect #####
-ggplot(data=subset(compDiffChange, experiment_year<7), aes(x=burn_regime, y=comp_diff_change, fill=as.factor(burned))) +
-  geom_boxplot() +
-  scale_fill_manual(values=c('red3', 'white'), labels=c('unburned year', 'burned year')) +
-  ylab('Yearly Change in Compositional Difference') + xlab('Burn Regime')
-#export at 1000x1000
+# ##### Burn Effect #####
+# ggplot(data=subset(compDiffChange, experiment_year<6), aes(x=burn_regime, y=comp_diff_change, fill=as.factor(burned))) +
+#   geom_boxplot() +
+#   scale_fill_manual(values=c('red3', 'white'), labels=c('unburned year', 'burned year')) +
+#   ylab('Yearly Change in Compositional Difference') + xlab('Burn Regime')
+# #export at 1000x1000
+#remove figure because can't show unburned (only one data point <6 yrs)
 
 
 
@@ -637,7 +638,7 @@ drivers <- read.csv('Konza_nutrient synthesis_drivers_20240304.csv')
 compDiffEarly <- compDiffChange%>%
   filter(!(project_name %in% c('GF Burned', 'GF Unburned'))) %>% 
   filter(treatment2 %in% c('5', 'b_u_n', 'u_u_n', 'N', 'N2P0', 'NPK_x_x')) %>% 
-  filter(experiment_year<7)
+  filter(experiment_year<6)
 
 quantile(compDiffEarly$comp_diff_change, probs = c(0.05,0.95), na.rm=T) #composition difference quantiles
 
@@ -666,8 +667,8 @@ ggplot(herbivoresDiff, aes(x=grasshopper, y=comp_diff_change, color=project_name
                      values=c('#686868', '#39869e', '#54c4b7', '#db4c23'), 
                      labels=c('ChANGE', 'Invert', 'NutNet', 'PPlots')) +
   xlim(c(0,450)) +
-  geom_hline(yintercept=-0.1139534  , linetype='dashed', size=1) + #5th quantile composition difference
-  geom_hline(yintercept=0.2442750 , linetype='dashed', size=1) + #95th quantile composition difference
+  geom_hline(yintercept=-0.07013296  , linetype='dashed', size=1) + #5th quantile composition difference
+  geom_hline(yintercept=0.26311583  , linetype='dashed', size=1) + #95th quantile composition difference
   geom_vline(xintercept=38.1500, linetype='dashed', size=1) + #5th quantile grasshopper abundance
   geom_vline(xintercept=411.0875, linetype='dashed', size=1) + #95th quantile grasshopper abundance 
   geom_point(size=10)
@@ -686,8 +687,8 @@ ggplot(herbivoresDiff, aes(x=mammal, y=comp_diff_change, color=project_name)) +
                      values=c('#686868', '#39869e', '#54c4b7', '#db4c23'), 
                      labels=c('ChANGE', 'Invert', 'NutNet', 'PPlots')) +
   xlim(c(0,35)) +
-  geom_hline(yintercept=-0.1139534  , linetype='dashed',size=1) + #5th quantile composition difference
-  geom_hline(yintercept=0.2442750 , linetype='dashed',size=1) + #95th quantile composition difference
+  geom_hline(yintercept=-0.07013296  , linetype='dashed', size=1) + #5th quantile composition difference
+  geom_hline(yintercept=0.26311583  , linetype='dashed', size=1) + #95th quantile composition difference
   geom_vline(xintercept=5.5750, linetype='dashed',size=1) + #5th quantile small mammal abundance
   geom_vline(xintercept=29.0375, linetype='dashed',size=1) + #95th quantile small mammal abundance
   geom_point(size=10)
@@ -722,8 +723,8 @@ ggplot(precipDiff, aes(x=year_precip, y=comp_diff_change, color=project_name)) +
                      values=c('#686868', '#39869e', '#54c4b7', '#db4c23'), 
                      labels=c('ChANGE', 'Invert', 'NutNet', 'PPlots')) +
   xlim(c(400,1350)) +
-  geom_hline(yintercept=-0.1139534  , linetype='dashed',size=1) + #5th quantile composition difference
-  geom_hline(yintercept=0.2442750 , linetype='dashed',size=1) + #95th quantile composition difference
+  geom_hline(yintercept=-0.07013296  , linetype='dashed', size=1) + #5th quantile composition difference
+  geom_hline(yintercept=0.26311583  , linetype='dashed', size=1) + #95th quantile composition difference
   geom_vline(xintercept=516, linetype='dashed',size=1) + #5th quantile annual precip
   geom_vline(xintercept=1119, linetype='dashed',size=1) + #95th quantile annual precip 
   geom_point(size=10)
@@ -742,8 +743,8 @@ ggplot(precipDiff, aes(x=grow_precip, y=comp_diff_change, color=project_name)) +
                      labels=c('ChANGE', 'Invert', 'NutNet', 'PPlots')) +
   theme(legend.position='none') +
   xlim(c(300,800)) +
-  geom_hline(yintercept=-0.1139534  , linetype='dashed',size=1) + #5th quantile composition difference
-  geom_hline(yintercept=0.2442750 , linetype='dashed',size=1) + #95th quantile composition difference
+  geom_hline(yintercept=-0.07013296  , linetype='dashed', size=1) + #5th quantile composition difference
+  geom_hline(yintercept=0.26311583  , linetype='dashed', size=1) + #95th quantile composition difference
   geom_vline(xintercept=305, linetype='dashed',size=1) + #5th quantile growing season precip
   geom_vline(xintercept=690, linetype='dashed',size=1) + #95th quantile growing season precip
   geom_point(size=10) 
@@ -783,8 +784,8 @@ ggplot(herbivoresDiff, aes(x=grasshopper, y=comp_diff_change, color=project_name
                      values=c('#686868', '#39869e', '#54c4b7', '#db4c23'), 
                      labels=c('ChANGE', 'Invert', 'NutNet', 'PPlots')) +
   xlim(c(0,450)) +
-  geom_hline(yintercept=-0.1139534  , linetype='dashed', size=1) + #5th quantile composition difference
-  geom_hline(yintercept=0.2442750 , linetype='dashed', size=1) + #95th quantile composition difference
+  geom_hline(yintercept=-0.07013296  , linetype='dashed', size=1) + #5th quantile composition difference
+  geom_hline(yintercept=0.26311583  , linetype='dashed', size=1) + #95th quantile composition difference
   geom_vline(xintercept=38.1500, linetype='dashed', size=1) + #5th quantile grasshopper abundance
   geom_vline(xintercept=411.0875, linetype='dashed', size=1) + #95th quantile grasshopper abundance 
   geom_point(size=10)
@@ -797,8 +798,8 @@ ggplot(herbivoresDiff, aes(x=mammal, y=comp_diff_change, color=project_name)) +
                      values=c('#686868', '#39869e', '#54c4b7', '#db4c23'), 
                      labels=c('ChANGE', 'Invert', 'NutNet', 'PPlots')) +
   xlim(c(0,35)) +
-  geom_hline(yintercept=-0.1139534  , linetype='dashed',size=1) + #5th quantile composition difference
-  geom_hline(yintercept=0.2442750 , linetype='dashed',size=1) + #95th quantile composition difference
+  geom_hline(yintercept=-0.07013296  , linetype='dashed', size=1) + #5th quantile composition difference
+  geom_hline(yintercept=0.26311583  , linetype='dashed', size=1) + #95th quantile composition difference
   geom_vline(xintercept=5.5750, linetype='dashed',size=1) + #5th quantile small mammal abundance
   geom_vline(xintercept=29.0375, linetype='dashed',size=1) + #95th quantile small mammal abundance
   geom_point(size=10)
@@ -823,8 +824,8 @@ ggplot(precipDiff, aes(x=year_precip, y=comp_diff_change, color=project_name)) +
                      values=c('#686868', '#39869e', '#54c4b7', '#db4c23'), 
                      labels=c('ChANGE', 'Invert', 'NutNet', 'PPlots')) +
   xlim(c(400,1350)) +
-  geom_hline(yintercept=-0.1139534  , linetype='dashed',size=1) + #5th quantile composition difference
-  geom_hline(yintercept=0.2442750 , linetype='dashed',size=1) + #95th quantile composition difference
+  geom_hline(yintercept=-0.07013296  , linetype='dashed', size=1) + #5th quantile composition difference
+  geom_hline(yintercept=0.26311583  , linetype='dashed', size=1) + #95th quantile composition difference
   geom_vline(xintercept=516, linetype='dashed',size=1) + #5th quantile annual precip
   geom_vline(xintercept=1119, linetype='dashed',size=1) + #95th quantile annual precip 
   geom_point(size=10)
@@ -837,8 +838,8 @@ ggplot(precipDiff, aes(x=grow_precip, y=comp_diff_change, color=project_name)) +
                      labels=c('ChANGE', 'Invert', 'NutNet', 'PPlots')) +
   theme(legend.position='none') +
   xlim(c(300,800)) +
-  geom_hline(yintercept=-0.1139534  , linetype='dashed',size=1) + #5th quantile composition difference
-  geom_hline(yintercept=0.2442750 , linetype='dashed',size=1) + #95th quantile composition difference
+  geom_hline(yintercept=-0.07013296  , linetype='dashed', size=1) + #5th quantile composition difference
+  geom_hline(yintercept=0.26311583  , linetype='dashed', size=1) + #95th quantile composition difference
   geom_vline(xintercept=305, linetype='dashed',size=1) + #5th quantile growing season precip
   geom_vline(xintercept=690, linetype='dashed',size=1) + #95th quantile growing season precip
   geom_point(size=10) 
