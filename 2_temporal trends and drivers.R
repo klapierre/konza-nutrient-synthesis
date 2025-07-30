@@ -632,7 +632,11 @@ summary(multReg <- lm(composition_diff ~ richness_diff_mean + species_diff_mean 
 ###### Comparing Difference to Covariates (herbivores, weather) #####
 
 # import drivers data
-drivers <- read.csv('Konza_nutrient synthesis_drivers_20240304.csv')
+drivers <- read.csv('Konza_nutrient synthesis_drivers_20240304.csv') %>% 
+  mutate(across(c('grow_precip','year_precip','grow_temp','year_temp','grasshopper','mammal'), ~ (.-mean(., na.rm=T)) / sd(., na.rm=T)))
+
+anomalies <- read.csv('Konza_nutrient synthesis_drivers_20240304.csv') %>% 
+  mutate(across(c('grow_precip','year_precip','grow_temp','year_temp','grasshopper','mammal'), ~ (.-mean(., na.rm=T)) / sd(., na.rm=T)))
 
 # calculate quantiles of change for early years of focal experiments
 compDiffEarly <- compDiffChange%>%
@@ -653,10 +657,17 @@ herbivoresDiff <- drivers %>%
   left_join(compDiffEarly, multiple='all') %>%
   filter(!is.na(comp_diff_change))
 
+herbivoresAnomalies <- anomalies %>%
+  left_join(compDiffEarly, multiple='all') %>%
+  filter(!is.na(comp_diff_change))
+
 #models
 with(herbivoresDiff, cor.test(grasshopper, comp_diff_change, method = "pearson", use = "complete.obs"))
 with(herbivoresDiff, cor.test(mammal, comp_diff_change, method = "pearson", use = "complete.obs"))
 
+#anomalies are the same result as raw data (reviewer request)
+# with(herbivoresAnomalies, cor.test(grasshopper, comp_diff_change, method = "pearson", use = "complete.obs"))
+# with(herbivoresAnomalies, cor.test(mammal, comp_diff_change, method = "pearson", use = "complete.obs"))
 
 #figures
 
@@ -710,9 +721,18 @@ precipDiff <- drivers %>%
   left_join(compDiffEarly, multiple='all') %>%
   filter(!is.na(comp_diff_change))
 
+precipAnomalies <- anomalies %>%
+  left_join(compDiffEarly, multiple='all') %>%
+  filter(!is.na(comp_diff_change))
+
 #models
 with(precipDiff, cor.test(year_precip, comp_diff_change, method = "pearson", use = "complete.obs"))
 with(precipDiff, cor.test(grow_precip, comp_diff_change, method = "pearson", use = "complete.obs"))
+
+
+#anomalies are the same result as raw data (reviewer request)
+with(precipAnomalies, cor.test(year_precip, comp_diff_change, method = "pearson", use = "complete.obs"))
+with(precipAnomalies, cor.test(grow_precip, comp_diff_change, method = "pearson", use = "complete.obs"))
 
 #figures
 
