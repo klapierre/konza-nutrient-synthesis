@@ -636,7 +636,7 @@ drivers <- read.csv('Konza_nutrient synthesis_drivers_20240304.csv') %>%
   mutate(across(c('grow_precip','year_precip','grow_temp','year_temp','grasshopper','mammal'), ~ (.-mean(., na.rm=T)) / sd(., na.rm=T)))
 
 anomalies <- read.csv('Konza_nutrient synthesis_drivers_20240304.csv') %>% 
-  mutate(across(c('grow_precip','year_precip','grow_temp','year_temp','grasshopper','mammal'), ~ (.-mean(., na.rm=T)) / sd(., na.rm=T)))
+  mutate(across(c('grow_precip','year_precip','grow_temp','year_temp','grasshopper','mammal'), ~ (abs(.-mean(., na.rm=T)) / sd(., na.rm=T))))
 
 # calculate quantiles of change for early years of focal experiments
 compDiffEarly <- compDiffChange%>%
@@ -666,8 +666,8 @@ with(herbivoresDiff, cor.test(grasshopper, comp_diff_change, method = "pearson",
 with(herbivoresDiff, cor.test(mammal, comp_diff_change, method = "pearson", use = "complete.obs"))
 
 #anomalies are the same result as raw data (reviewer request)
-# with(herbivoresAnomalies, cor.test(grasshopper, comp_diff_change, method = "pearson", use = "complete.obs"))
-# with(herbivoresAnomalies, cor.test(mammal, comp_diff_change, method = "pearson", use = "complete.obs"))
+with(herbivoresAnomalies, cor.test(grasshopper, comp_diff_change, method = "pearson", use = "complete.obs"))
+with(herbivoresAnomalies, cor.test(mammal, comp_diff_change, method = "pearson", use = "complete.obs"))
 
 #figures
 
